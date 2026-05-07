@@ -908,6 +908,8 @@
       timeline(d.timeline);
     }
 
+    const API = 'https://biozagora.ddns.net/Survey';
+
     // ── Responses table ────────────────────────────────────
     let currentPage = 1;
 
@@ -922,7 +924,7 @@
       const tbody = document.getElementById('responses-tbody');
       tbody.innerHTML = '<tr><td colspan="10" class="text-center py-3 text-muted"><i class="fas fa-spinner fa-spin me-2"></i>Chargement…</td></tr>';
       try {
-        const res = await fetch(`/api/responses?page=${page}`);
+        const res = await fetch(`${API}/api/responses?page=${page}`);
         const json = await res.json();
         document.getElementById('resp-count').textContent = `${json.total} réponse${json.total !== 1 ? 's' : ''}`;
 
@@ -981,7 +983,7 @@
     async function deleteResponse(id) {
       if (!confirm(`Supprimer la réponse #${id} ? Cette action est irréversible.`)) return;
       try {
-        await fetch(`/api/responses/${id}`, { method: 'DELETE' });
+        await fetch(`${API}/api/responses/${id}`, { method: 'DELETE' });
         toast(`Réponse #${id} supprimée`);
         await loadAll();
       } catch(e) { toast('Erreur suppression : ' + e.message, 'error'); }
@@ -993,7 +995,7 @@
       icon.classList.add('spin');
       try {
         const [analyticsRes] = await Promise.all([
-          fetch('/api/analytics')
+          fetch(`${API}/api/analytics`)
         ]);
         const analytics = await analyticsRes.json();
         if (analytics.error) throw new Error(analytics.error);
@@ -1034,11 +1036,11 @@
     // ── Export CSV ─────────────────────────────────────────
     async function exportCSV() {
       try {
-        const res = await fetch('/api/responses?page=1');
+        const res = await fetch(`${API}/api/responses?page=1`);
         const json = await res.json();
         const total = json.total;
         if (!total) { toast('Aucune donnée à exporter', 'info'); return; }
-        const all = await fetch(`/api/responses?page=1&limit=${total}`);
+        const all = await fetch(`${API}/api/responses?page=1&limit=${total}`);
         // fallback: export page 1 only if endpoint doesn't support limit
         const data = json.data;
         if (!data.length) { toast('Aucune donnée', 'info'); return; }
@@ -1056,7 +1058,7 @@
     async function seedData() {
       if (!confirm('Ajouter 40 réponses de démonstration ?')) return;
       try {
-        const res = await fetch('/api/seed', { method: 'POST' });
+        const res = await fetch(`${API}/api/seed`, { method: 'POST' });
         const json = await res.json();
         if (json.success) { toast(json.message); loadAll(); }
       } catch(e) { toast('Erreur : ' + e.message, 'error'); }

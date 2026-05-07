@@ -1105,6 +1105,7 @@
 
   <!-- ═══ JAVASCRIPT ═══ -->
   <script>
+    const API = 'https://biozagora.ddns.net/Survey';
     const STEPS = 6;
     const SECTION_NAMES = [
       'Informations générales','Utilisation des technologies',
@@ -1245,7 +1246,7 @@
       }
 
       try {
-        const res  = await fetch('/api/submit', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+        const res  = await fetch(`${API}/api/submit`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
         const json = await res.json();
         if (json.success) {
           document.getElementById('success-overlay').classList.remove('hidden');

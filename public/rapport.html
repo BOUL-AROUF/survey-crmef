@@ -433,6 +433,7 @@
 </div><!-- /wrap -->
 
 <script>
+  const API = 'https://biozagora.ddns.net/Survey';
   // ── Palette ──────────────────────────────────────────────────
   const C = ['#6366f1','#3b82f6','#14b8a6','#22c55e','#f59e0b','#f97316','#ef4444','#8b5cf6','#ec4899','#0ea5e9'];
   const alpha = (hex, a) => {
@@ -578,7 +579,7 @@
   // ── Main load ────────────────────────────────────────────────
   async function load() {
     try {
-    const res = await fetch('/api/analytics');
+    const res = await fetch(`${API}/api/analytics`);
     const d = await res.json();
 
     // Hide loading overlay
