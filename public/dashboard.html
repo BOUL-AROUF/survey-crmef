@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Questionnaire QCM CRMEF</title>
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    :root {
+      --sidebar-w: 260px;
+      --primary: #4f46e5;
+      --sidebar-bg: #0f172a;
+    }
+    body { background: #f1f5f9; min-height: 100vh; }
+
+    /* ── Sidebar ── */
+    #sidebar {
+      width: var(--sidebar-w);
+      background: var(--sidebar-bg);
+      min-height: 100vh;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.3s ease;
+    }
+    #sidebar .sidebar-brand {
+      padding: 1.5rem 1.25rem;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    #sidebar .nav-link {
+      color: rgba(255,255,255,0.65);
+      padding: 0.65rem 1.25rem;
+      border-radius: 0.5rem;
+      margin: 0.1rem 0.75rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+    }
+    #sidebar .nav-link:hover,
+    #sidebar .nav-link.active {
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+    }
+    #sidebar .nav-link .icon { width: 18px; text-align: center; }
+    #sidebar .section-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.3);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 1rem 1.25rem 0.35rem;
+    }
+
+    /* ── Main content ── */
+    #main-content {
+      margin-left: var(--sidebar-w);
+      min-height: 100vh;
+      transition: margin 0.3s ease;
+    }
+
+    /* ── Topbar ── */
+    #topbar {
+      background: #fff;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 0.875rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    /* ── KPI Cards ── */
+    .kpi-card {
+      background: #fff;
+      border-radius: 1rem;
+      padding: 1.25rem 1.5rem;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+    .kpi-icon {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.25rem;
+    }
+    .kpi-value { font-size: 2rem; font-weight: 800; color: #1e293b; line-height: 1; }
+    .kpi-label { font-size: 0.8rem; color: #64748b; font-weight: 500; margin-top: 0.25rem; }
+
+    /* ── Chart cards ── */
+    .chart-card {
+      background: #fff;
+      border-radius: 1rem;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      overflow: hidden;
+    }
+    .chart-card .card-header-custom {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .chart-card .card-header-custom .q-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      background: #eef2ff;
+      color: #4f46e5;
+      border-radius: 999px;
+      padding: 0.2rem 0.6rem;
+    }
+    .chart-card .card-title { font-size: 0.875rem; font-weight: 600; color: #1e293b; margin: 0; }
+    .chart-card .card-body-custom { padding: 1.25rem; }
+    .chart-wrap { position: relative; height: 220px; }
+    .chart-wrap-h { position: relative; height: 180px; }
+    .chart-wrap-lg { position: relative; height: 280px; }
+
+    /* ── Section header ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 0.75rem 1.25rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,.04);
+    }
+    .section-header .section-icon {
+      width: 38px; height: 38px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+      color: white;
+      flex-shrink: 0;
+      box-shadow: 0 3px 8px rgba(0,0,0,.15);
+    }
+    .section-header h3 { font-size: 1rem; font-weight: 700; color: #1e293b; margin: 0; }
+    .section-header .q-range {
+      margin-left: auto; font-size: 0.72rem; font-weight: 600;
+      background: #f1f5f9; color: #64748b; border-radius: 999px;
+      padding: 0.2rem 0.65rem;
+    }
+
+    /* ── Table ── */
+    .table-card {
+      background: #fff;
+      border-radius: 1rem;
+      border: 1px solid #e2e8f0;
+      overflow: hidden;
+    }
+    .table thead th {
+      background: #f8fafc;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #64748b;
+      border-bottom: 2px solid #e2e8f0;
+      white-space: nowrap;
+    }
+    .table td { font-size: 0.8rem; color: #374151; vertical-align: middle; }
+    .badge-pill { border-radius: 999px; font-size: 0.7rem; font-weight: 600; padding: 0.25rem 0.65rem; }
+
+    /* ── Empty state ── */
+    .empty-state { text-align: center; padding: 2.5rem 1rem; color: #94a3b8; }
+    .empty-state i { font-size: 2.5rem; margin-bottom: 0.75rem; display: block; }
+
+    /* ── Mobile overlay ── */
+    @media (max-width: 991.98px) {
+      #sidebar { transform: translateX(-100%); }
+      #sidebar.open { transform: translateX(0); box-shadow: 0 0 40px rgba(0,0,0,0.4); }
+      #main-content { margin-left: 0; }
+      .sidebar-overlay { display: block; }
+    }
+    .sidebar-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 99;
+    }
+    .sidebar-overlay.show { display: block; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 3px; }
+
+    /* Refresh spin */
+    .spin { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <!-- ── Sidebar Overlay (mobile) ── -->
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <!-- ── Sidebar ── -->
+  <nav id="sidebar">
+    <div class="sidebar-brand">
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <div style="width:36px;height:36px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+          <i class="fas fa-atom text-white" style="font-size:1rem;"></i>
+        </div>
+        <div>
+          <div style="color:#fff;font-weight:700;font-size:0.9rem;line-height:1.2;">CRMEF Dashboard</div>
+          <div style="color:rgba(255,255,255,0.4);font-size:0.7rem;">Physique-Chimie & Numérique</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pt-2 flex-grow-1">
+      <div class="section-label">Navigation</div>
+      <a href="#overview" class="nav-link active" onclick="scrollTo('overview')">
+        <i class="fas fa-home icon"></i> Vue d'ensemble
+      </a>
+      <a href="#section1" class="nav-link" onclick="scrollTo('section1')">
+        <i class="fas fa-user icon"></i> Informations générales
+      </a>
+      <a href="#section2" class="nav-link" onclick="scrollTo('section2')">
+        <i class="fas fa-laptop icon"></i> Utilisation des technologies
+      </a>
+      <a href="#section3" class="nav-link" onclick="scrollTo('section3')">
+        <i class="fas fa-brain icon"></i> Impact sur l'apprentissage
+      </a>
+      <a href="#section4" class="nav-link" onclick="scrollTo('section4')">
+        <i class="fas fa-balance-scale icon"></i> Comparaison
+      </a>
+      <a href="#section5" class="nav-link" onclick="scrollTo('section5')">
+        <i class="fas fa-road icon"></i> Difficultés & Perspectives
+      </a>
+      <a href="#section6" class="nav-link" onclick="scrollTo('section6')">
+        <i class="fas fa-star icon"></i> Avis global
+      </a>
+      <a href="#responses" class="nav-link" onclick="scrollTo('responses')">
+        <i class="fas fa-table icon"></i> Réponses récentes
+      </a>
+      <div class="section-label mt-2">Documents</div>
+      <a href="/rapport.html" class="nav-link">
+        <i class="fas fa-file-chart-column icon"></i> Rapport analytique
+      </a>
+      <a href="/questionnaire.html" class="nav-link" target="_blank">
+        <i class="fas fa-file-lines icon"></i> Questionnaire PDF
+      </a>
+      <div class="section-label mt-2">Actions</div>
+      <a href="/" class="nav-link">
+        <i class="fas fa-plus icon"></i> Nouveau questionnaire
+      </a>
+      <a href="#" onclick="seedData()" class="nav-link">
+        <i class="fas fa-seedling icon"></i> Données de démo
+      </a>
+    </div>
+
+    <div style="padding:1rem;border-top:1px solid rgba(255,255,255,0.08);">
+      <div style="color:rgba(255,255,255,0.35);font-size:0.7rem;text-align:center;">
+        Questionnaire QCM v1.0 • CRMEF
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── Main Content ── -->
+  <div id="main-content">
+
+    <!-- Topbar -->
+    <div id="topbar">
+      <div class="d-flex align-items-center gap-3">
+        <button class="btn btn-sm btn-outline-secondary d-lg-none" onclick="toggleSidebar()">
+          <i class="fas fa-bars"></i>
+        </button>
+        <div>
+          <div style="font-weight:700;font-size:0.95rem;color:#1e293b;">Tableau de bord analytique</div>
+          <div style="font-size:0.75rem;color:#94a3b8;" id="last-refresh">Chargement…</div>
+        </div>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="/rapport.html" class="btn btn-sm d-none d-sm-inline-flex align-items-center gap-1" style="background:#f1f5f9;color:#475569;font-weight:600;">
+          <i class="fas fa-file-chart-column"></i> <span class="d-none d-md-inline">Rapport</span>
+        </a>
+        <button class="btn btn-sm d-none d-sm-inline-flex align-items-center gap-1" style="background:#f0fdf4;color:#15803d;font-weight:600;" onclick="exportCSV()">
+          <i class="fas fa-file-csv"></i> <span class="d-none d-md-inline">Exporter</span>
+        </button>
+        <button class="btn btn-sm" style="background:#eef2ff;color:#4f46e5;font-weight:600;" onclick="loadAll()">
+          <i class="fas fa-sync-alt me-1" id="refresh-icon"></i> <span class="d-none d-sm-inline">Actualiser</span>
+        </button>
+        <a href="/" class="btn btn-sm btn-primary" style="font-weight:600;">
+          <i class="fas fa-plus me-1"></i> <span class="d-none d-sm-inline">Répondre</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Page body -->
+    <div class="p-3 p-lg-4">
+
+      <!-- ── OVERVIEW ── -->
+      <div id="overview" class="mb-4">
+        <!-- KPI Cards -->
+        <div class="row g-3 mb-4">
+          <div class="col-6 col-md-3">
+            <div class="kpi-card">
+              <div class="d-flex align-items-center justify-content-between mb-3">
+                <div class="kpi-icon" style="background:linear-gradient(135deg,#6366f1,#4f46e5);">
+                  <i class="fas fa-clipboard-list text-white" style="font-size:1.1rem;"></i>
+                </div>
+                <span style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;">Total</span>
+              </div>
+              <div class="kpi-value" id="kpi-total">—</div>
+              <div class="kpi-label">Réponses enregistrées</div>
+              <div style="height:3px;background:linear-gradient(90deg,#6366f1,#818cf8);border-radius:99px;margin-top:14px;opacity:.5;"></div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="kpi-card">
+              <div class="d-flex align-items-center justify-content-between mb-3">
+                <div class="kpi-icon" style="background:linear-gradient(135deg,#10b981,#059669);">
+                  <i class="fas fa-calendar-day text-white" style="font-size:1.1rem;"></i>
+                </div>
+                <span style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;">Jour</span>
+              </div>
+              <div class="kpi-value" id="kpi-today">—</div>
+              <div class="kpi-label">Réponses aujourd'hui</div>
+              <div style="height:3px;background:linear-gradient(90deg,#10b981,#34d399);border-radius:99px;margin-top:14px;opacity:.5;"></div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="kpi-card">
+              <div class="d-flex align-items-center justify-content-between mb-3">
+                <div class="kpi-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);">
+                  <i class="fas fa-chart-line text-white" style="font-size:1.1rem;"></i>
+                </div>
+                <span style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;">7 jours</span>
+              </div>
+              <div class="kpi-value" id="kpi-week">—</div>
+              <div class="kpi-label">Cette semaine</div>
+              <div style="height:3px;background:linear-gradient(90deg,#f59e0b,#fbbf24);border-radius:99px;margin-top:14px;opacity:.5;"></div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="kpi-card">
+              <div class="d-flex align-items-center justify-content-between mb-3">
+                <div class="kpi-icon" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);">
+                  <i class="fas fa-bullseye text-white" style="font-size:1.1rem;"></i>
+                </div>
+                <span style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;">Taux</span>
+              </div>
+              <div class="kpi-value" id="kpi-completion">—%</div>
+              <div class="kpi-label">Taux de participation</div>
+              <div style="height:3px;background:linear-gradient(90deg,#8b5cf6,#a78bfa);border-radius:99px;margin-top:14px;opacity:.5;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Timeline -->
+        <div class="chart-card mb-4">
+          <div class="card-header-custom">
+            <div>
+              <div class="card-title">Évolution des réponses (30 derniers jours)</div>
+            </div>
+            <span class="q-badge">Timeline</span>
+          </div>
+          <div class="card-body-custom">
+            <div class="chart-wrap-lg">
+              <canvas id="chart-timeline"></canvas>
+            </div>
+            <div class="empty-state d-none" id="empty-timeline">
+              <i class="fas fa-chart-line"></i>
+              Aucune donnée de timeline disponible
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SECTION 1 : Informations générales ── -->
+      <div id="section1" class="mb-4">
+        <div class="section-header">
+          <div class="section-icon" style="background:linear-gradient(135deg,#6366f1,#4f46e5);">
+            <i class="fas fa-user"></i>
+          </div>
+          <h3>1. Informations générales</h3>
+          <span class="q-range">Q1 – Q4</span>
+        </div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="chart-card">
+              <div class="card-header-custom">
+                <div class="card-title">Q1 — Répartition par sexe</div>
+                <span class="q-badge">Q1</span>
+              </div>
+              <div class="card-body-custom">
+                <div class="chart-wrap"><canvas id="chart-q1"></canvas></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="chart-card">
+              <div class="card-header-custom">
+                <div class="card-title">Q2 — Expérience professionnelle</div>
+                <span class="q-badge">Q2</span>
+              </div>
+              <div class="card-body-custom">
+                <div class="chart-wrap"><canvas id="chart-q2"></canvas></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="chart-card">
+              <div class="card-header-custom">
+                <div class="card-title">Q3 — Type d'établissement</div>
+                <span class="q-badge">Q3</span>
+              </div>
+              <div class="card-body-custom">
+                <div class="chart-wrap"><canvas id="chart-q3"></canvas></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="chart-card">
+              <div class="card-header-custom">
+                <div class="card-title">Q4 — Utilisation du numérique</div>
+                <span class="q-badge">Q4</span>
+              </div>
+              <div class="card-body-custom">
+                <div class="chart-wrap"><canvas id="chart-q4"></canvas></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SECTION 2 : Utilisation des technologies ── -->
+      <div id="section2" class="mb-4">
+        <div class="section-header">
+          <div class="section-icon" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8);">
+            <i class="fas fa-laptop"></i>
+          </div>
+          <h3>2. Utilisation des technologies</h3>
+          <span class="q-range">Q5 – Q7</span>
+        </div>
+        <div class="row g-3">
+          <div class="col-12">
+            <div class="chart-card">
+              <div class="card-header-custom">
+                <div class="card-title">Q5 — Outils numériques utilisés (multi-sélection)</div>
+                <span class="q-badge">Q5</span>
+              </div>
+              <div class="card-body-custom">
+                <div style="height:200px;"><canvas id="chart-q5"></canvas></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-5">
+            <div class="chart-card">
+              <div class="card-header-custom">
+                <div class="card-title">Q6 — Fréquence d'utilisation</div>
+                <span class="q-badge">Q6</span>
+              </div>
+              <div class="card-body-custom">
+                <div class="chart-wrap"><canvas id="chart-q6"></canvas></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-7">
+            <div class="chart-card">
+              <div class="card-header-custom">
+                <div class="card-title">Q7 — Mode d'utilisation (multi-sélection)</div>
+                <span class="q-badge">Q7</span>
+              </div>
+              <div class="card-body-custom">
+                <div class="chart-wrap"><canvas id="chart-q7"></canvas></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SECTION 3 : Impact sur l'apprentissage ── -->
+      <div id="section3" class="mb-4">
+        <div class="section-header">
+          <div class="section-icon" style="background:linear-gradient(135deg,#14b8a6,#0d9488);">
+            <i class="fas fa-brain"></i>
+          </div>
+          <h3>3. Impact sur l'apprentissage</h3>
+          <span class="q-range">Q8 – Q11</span>
+        </div>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="chart-card">
+              <div class="card-header-custom">
+                <div class="card-title">Q8 — Impact sur la compréhension</div>
+                <span class="q-badge">Q8</span>
+              </div>
+              <div class="card-body-custom">
+                <div class="chart-wrap"><canvas id="chart-q8"></canvas></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="chart-card">
+              <div class="card-header-custom">
+                <div class="card-title">Q9 — Impact sur la motivation</div>
+                <span class="q-badge">Q9</span>
+              </div>
+              <div class="card-body-custom">
+                <div class="chart-wrap"><canvas id="chart-q9"></canvas></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="chart-card">
+              <div class="card-header-custom">
+                <div class="card-title">Q10 — Impact sur l'autonomie</div>
+                <span class="q-badge">Q10</span>
+              </div>
+              <div class="card-body-custom">
+                <div class="chart-wrap"><canvas id="chart-q10"></canvas></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-12">
+            <div class="chart-card">
+              <div class="card-header-custom">
+                <div class="card-title">Q11 — Engagement des élèves</div>
+                <span class="q-badge">Q11</span>
+              </div>
+              <div class="card-body-custom">
+                <div class="chart-wrap"><canvas id="chart-q11"></canvas></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SECTION 4 : Comparaison ── -->
+      <div id="section4" class="mb-4">
+        <div class="section-header">
+          <div class="section-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);">
+            <i class="fas fa-balance-scale"></i>
+          </div>
+          <h3>4. Comparaison traditionnel / numérique</h3>
+          <span class="q-range">Q12 – Q14</span>
+        </div>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="chart-card">
+              <div class="card-header-custom">
+                <div class="card-title">Q12 — Efficacité du numérique</div>
+                <span class="q-badge">Q12</span>
+              </div>
+              <div class="card-body-custom">
+                <div class="chart-wrap"><canvas id="chart-q12"></canvas></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="chart-card">
+              <div class="card-header-custom">
+                <div class="card-title">Q13 — Avantages du traditionnel</div>
+                <span class="q-badge">Q13</span>
+              </div>
+              <div class="card-body-custom">
+                <div class="chart-wrap"><canvas id="chart-q13"></canvas></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="chart-card">
+              <div class="card-header-custom">
+                <div class="card-title">Q14 — Rôle du numérique</div>
+                <span class="q-badge">Q14</span>
+              </div>
+              <div class="card-body-custom">
+                <div class="chart-wrap"><canvas id="chart-q14"></canvas></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SECTION 5 : Difficultés & Perspectives ── -->
+      <div id="section5" class="mb-4">
+        <div class="section-header">
+          <div class="section-icon" style="background:linear-gradient(135deg,#f43f5e,#be185d);">
+            <i class="fas fa-road"></i>
+          </div>
+          <h3>5. Difficultés & Perspectives</h3>
+          <span class="q-range">Q15 – Q18</span>
+        </div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="chart-card">
+              <div class="card-header-custom">
+                <div class="card-title">Q15 — Difficultés rencontrées</div>
+                <span class="q-badge">Q15</span>
+              </div>
+              <div class="card-body-custom">
+                <div style="height:200px;"><canvas id="chart-q15"></canvas></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="chart-card">
+              <div class="card-header-custom">
+                <div class="card-title">Q16 — Besoin de formation</div>
+                <span class="q-badge">Q16</span>
+              </div>
+              <div class="card-body-custom">
+                <div class="chart-wrap"><canvas id="chart-q16"></canvas></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="chart-card">
+              <div class="card-header-custom">
+                <div class="card-title">Q17 — Type de formation souhaité</div>
+                <span class="q-badge">Q17</span>
+              </div>
+              <div class="card-body-custom">
+                <div style="height:200px;"><canvas id="chart-q17"></canvas></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="chart-card">
+              <div class="card-header-custom">
+                <div class="card-title">Q18 — Améliorations nécessaires</div>
+                <span class="q-badge">Q18</span>
+              </div>
+              <div class="card-body-custom">
+                <div style="height:200px;"><canvas id="chart-q18"></canvas></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SECTION 6 : Avis global ── -->
+      <div id="section6" class="mb-4">
+        <div class="section-header">
+          <div class="section-icon" style="background:linear-gradient(135deg,#22c55e,#15803d);">
+            <i class="fas fa-star"></i>
+          </div>
+          <h3>6. Avis global</h3>
+          <span class="q-range">Q19 – Q20</span>
+        </div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="chart-card">
+              <div class="card-header-custom">
+                <div class="card-title">Q19 — Importance de l'intégration numérique</div>
+                <span class="q-badge">Q19</span>
+              </div>
+              <div class="card-body-custom">
+                <div class="chart-wrap"><canvas id="chart-q19"></canvas></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="chart-card">
+              <div class="card-header-custom">
+                <div class="card-title">Q20 — Recommandation de l'usage du numérique</div>
+                <span class="q-badge">Q20</span>
+              </div>
+              <div class="card-body-custom">
+                <div class="chart-wrap"><canvas id="chart-q20"></canvas></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── RECENT RESPONSES ── -->
+      <div id="responses" class="mb-4">
+        <div class="section-header mb-3">
+          <div class="section-icon" style="background:linear-gradient(135deg,#6b7280,#374151);">
+            <i class="fas fa-table"></i>
+          </div>
+          <h3>Réponses récentes</h3>
+        </div>
+        <div class="table-card">
+          <div class="d-flex align-items-center justify-content-between p-3 border-bottom">
+            <div style="font-weight:600;font-size:0.875rem;color:#1e293b;">Liste des participations</div>
+            <div id="resp-count" class="badge" style="background:#eef2ff;color:#4f46e5;font-size:0.75rem;"></div>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>#</th><th>Date</th><th>Sexe</th><th>Expérience</th>
+                  <th>Établissement</th><th>Utilise numérique</th>
+                  <th>Fréquence</th><th>Impact compréhension</th>
+                  <th>Recommandation</th><th></th>
+                </tr>
+              </thead>
+              <tbody id="responses-tbody">
+                <tr><td colspan="10" class="text-center py-4 text-muted">Chargement…</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <!-- Pagination -->
+          <div class="d-flex align-items-center justify-content-between p-3 border-top" id="pagination-wrap">
+            <div style="font-size:0.8rem;color:#64748b;" id="pag-info"></div>
+            <div class="d-flex gap-2" id="pag-btns"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /page body -->
+  </div><!-- /main-content -->
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // ── Color palette ──────────────────────────────────────
+    const COLORS = [
+      '#6366f1','#3b82f6','#14b8a6','#22c55e',
+      '#f59e0b','#f97316','#ef4444','#8b5cf6',
+      '#ec4899','#0ea5e9','#84cc16','#06b6d4'
+    ];
+    const ALPHA = (hex, a) => {
+      const r = parseInt(hex.slice(1,3),16);
+      const g = parseInt(hex.slice(3,5),16);
+      const b = parseInt(hex.slice(5,7),16);
+      return `rgba(${r},${g},${b},${a})`;
+    };
+
+    // ── Chart registry ─────────────────────────────────────
+    const chartInstances = {};
+
+    function destroyChart(id) {
+      if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; }
+    }
+
+    function makeChart(id, config) {
+      destroyChart(id);
+      const ctx = document.getElementById(id);
+      if (!ctx) return;
+      chartInstances[id] = new Chart(ctx, config);
+      return chartInstances[id];
+    }
+
+    // ── Donut chart ────────────────────────────────────────
+    function donut(id, data) {
+      if (!data || !data.length) return;
+      makeChart(id, {
+        type: 'doughnut',
+        data: {
+          labels: data.map(d => d.label),
+          datasets: [{
+            data: data.map(d => d.count),
+            backgroundColor: data.map((_, i) => COLORS[i % COLORS.length]),
+            borderWidth: 2,
+            borderColor: '#fff',
+            hoverBorderColor: '#fff'
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          cutout: '60%',
+          plugins: {
+            legend: { position: 'right', labels: { font: { size: 11 }, padding: 12, usePointStyle: true } },
+            tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed} réponses` } }
+          }
+        }
+      });
+    }
+
+    // ── Vertical bar chart ─────────────────────────────────
+    function barV(id, data, orderBy) {
+      if (!data || !data.length) return;
+      let sorted = orderBy
+        ? [...data].sort((a,b) => orderBy.indexOf(a.label) - orderBy.indexOf(b.label))
+        : data;
+      makeChart(id, {
+        type: 'bar',
+        data: {
+          labels: sorted.map(d => d.label),
+          datasets: [{
+            data: sorted.map(d => d.count),
+            backgroundColor: sorted.map((_, i) => ALPHA(COLORS[i % COLORS.length], 0.85)),
+            borderColor: sorted.map((_, i) => COLORS[i % COLORS.length]),
+            borderWidth: 2,
+            borderRadius: 8,
+            borderSkipped: false,
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y} réponses` } } },
+          scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 11 } }, grid: { color: '#f1f5f9' } },
+            x: { ticks: { font: { size: 10 } }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    // ── Horizontal bar chart ───────────────────────────────
+    function barH(id, data) {
+      if (!data || !data.length) return;
+      const sorted = [...data].sort((a,b) => a.count - b.count);
+      makeChart(id, {
+        type: 'bar',
+        data: {
+          labels: sorted.map(d => d.label),
+          datasets: [{
+            data: sorted.map(d => d.count),
+            backgroundColor: sorted.map((_, i) => ALPHA(COLORS[i % COLORS.length], 0.85)),
+            borderColor: sorted.map((_, i) => COLORS[i % COLORS.length]),
+            borderWidth: 2,
+            borderRadius: 6,
+            borderSkipped: false,
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.x} mentions` } } },
+          scales: {
+            x: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 11 } }, grid: { color: '#f1f5f9' } },
+            y: { ticks: { font: { size: 10 } }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    // ── Timeline line chart ────────────────────────────────
+    function timeline(data) {
+      if (!data || !data.length) {
+        document.getElementById('chart-timeline').classList.add('d-none');
+        document.getElementById('empty-timeline').classList.remove('d-none');
+        return;
+      }
+      makeChart('chart-timeline', {
+        type: 'line',
+        data: {
+          labels: data.map(d => {
+            const dt = new Date(d.date);
+            return dt.toLocaleDateString('fr-FR', { day:'2-digit', month:'short' });
+          }),
+          datasets: [{
+            label: 'Réponses',
+            data: data.map(d => d.count),
+            borderColor: '#4f46e5',
+            backgroundColor: ALPHA('#4f46e5', 0.1),
+            borderWidth: 2.5,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            pointBackgroundColor: '#4f46e5',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { mode: 'index', intersect: false, callbacks: { label: ctx => ` ${ctx.parsed.y} réponses` } }
+          },
+          scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 11 } }, grid: { color: '#f1f5f9' } },
+            x: { ticks: { font: { size: 11 } }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    // ── Render all charts from analytics ──────────────────
+    function renderCharts(d) {
+      donut('chart-q1', d.q1);
+      barV('chart-q2', d.q2, ['Moins de 5 ans','5–10 ans','Plus de 10 ans']);
+      donut('chart-q3', d.q3);
+      donut('chart-q4', d.q4);
+      barH('chart-q5', d.q5);
+      barV('chart-q6', d.q6, ['Toujours','Souvent','Parfois','Rarement','Jamais']);
+      barH('chart-q7', d.q7);
+      barV('chart-q8', d.q8, ['Pas du tout','Peu','Moyen','Beaucoup']);
+      barV('chart-q9', d.q9, ['Pas du tout','Peu','Moyen','Beaucoup']);
+      barV('chart-q10', d.q10, ['Pas du tout','Peu','Moyen','Beaucoup']);
+      donut('chart-q11', d.q11);
+      donut('chart-q12', d.q12);
+      barH('chart-q13', d.q13);
+      donut('chart-q14', d.q14);
+      barH('chart-q15', d.q15);
+      donut('chart-q16', d.q16);
+      barH('chart-q17', d.q17);
+      barH('chart-q18', d.q18);
+      barV('chart-q19', d.q19, ['Très importante','Importante','Moyennement importante','Peu importante','Pas importante']);
+      barV('chart-q20', d.q20, ['Oui fortement','Oui','Neutre','Non','Pas du tout']);
+      timeline(d.timeline);
+    }
+
+    // ── Responses table ────────────────────────────────────
+    let currentPage = 1;
+
+    function badge(val, colorMap) {
+      if (!val) return '<span class="text-muted">—</span>';
+      const cls = colorMap && colorMap[val] ? colorMap[val] : 'secondary';
+      return `<span class="badge badge-pill bg-${cls}-subtle text-${cls}-emphasis">${val}</span>`;
+    }
+
+    async function loadResponses(page = 1) {
+      currentPage = page;
+      const tbody = document.getElementById('responses-tbody');
+      tbody.innerHTML = '<tr><td colspan="10" class="text-center py-3 text-muted"><i class="fas fa-spinner fa-spin me-2"></i>Chargement…</td></tr>';
+      try {
+        const res = await fetch(`/api/responses?page=${page}`);
+        const json = await res.json();
+        document.getElementById('resp-count').textContent = `${json.total} réponse${json.total !== 1 ? 's' : ''}`;
+
+        if (!json.data.length) {
+          tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state"><i class="fas fa-inbox"></i>Aucune réponse pour le moment</div></td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = json.data.map(r => `
+          <tr>
+            <td><span class="text-muted fw-medium">#${r.id}</span></td>
+            <td>${r.created_at ? r.created_at.slice(0,16) : '—'}</td>
+            <td>${r.q1_sexe || '—'}</td>
+            <td>${r.q2_experience || '—'}</td>
+            <td>${r.q3_etablissement || '—'}</td>
+            <td>
+              <span class="badge rounded-pill" style="background:${r.q4_utilisation==='Oui'?'#d1fae5':r.q4_utilisation==='Parfois'?'#fef3c7':'#fee2e2'};color:${r.q4_utilisation==='Oui'?'#065f46':r.q4_utilisation==='Parfois'?'#92400e':'#991b1b'};">
+                ${r.q4_utilisation || '—'}
+              </span>
+            </td>
+            <td>${r.q6_frequence || '—'}</td>
+            <td>${r.q8_comprehension || '—'}</td>
+            <td>
+              <span class="badge rounded-pill" style="background:#eef2ff;color:#4f46e5;">
+                ${r.q20_recommandation || '—'}
+              </span>
+            </td>
+            <td>
+              <button class="btn btn-sm btn-outline-danger" style="font-size:0.7rem;padding:2px 8px;" onclick="deleteResponse(${r.id})">
+                <i class="fas fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+        `).join('');
+
+        // Pagination
+        const info = document.getElementById('pag-info');
+        const btns = document.getElementById('pag-btns');
+        info.textContent = `Page ${json.page} sur ${json.pages} (${json.total} au total)`;
+        btns.innerHTML = '';
+        if (json.pages > 1) {
+          for (let p = 1; p <= json.pages; p++) {
+            const btn = document.createElement('button');
+            btn.className = `btn btn-sm ${p === json.page ? 'btn-primary' : 'btn-outline-secondary'}`;
+            btn.style.minWidth = '36px';
+            btn.textContent = p;
+            btn.onclick = () => loadResponses(p);
+            btns.appendChild(btn);
+          }
+        }
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="10" class="text-center text-danger py-3">${e.message}</td></tr>`;
+      }
+    }
+
+    async function deleteResponse(id) {
+      if (!confirm(`Supprimer la réponse #${id} ? Cette action est irréversible.`)) return;
+      try {
+        await fetch(`/api/responses/${id}`, { method: 'DELETE' });
+        toast(`Réponse #${id} supprimée`);
+        await loadAll();
+      } catch(e) { toast('Erreur suppression : ' + e.message, 'error'); }
+    }
+
+    // ── Main load ──────────────────────────────────────────
+    async function loadAll() {
+      const icon = document.getElementById('refresh-icon');
+      icon.classList.add('spin');
+      try {
+        const [analyticsRes] = await Promise.all([
+          fetch('/api/analytics')
+        ]);
+        const analytics = await analyticsRes.json();
+        if (analytics.error) throw new Error(analytics.error);
+
+        document.getElementById('kpi-total').textContent = analytics.total;
+        document.getElementById('kpi-today').textContent = analytics.today;
+        document.getElementById('kpi-week').textContent = analytics.week;
+        const comp = analytics.total > 0 ? Math.round((analytics.total / Math.max(analytics.total, 50)) * 100) : 0;
+        document.getElementById('kpi-completion').textContent = `${Math.min(comp, 100)}%`;
+
+        renderCharts(analytics);
+        await loadResponses(currentPage);
+
+        const now = new Date();
+        document.getElementById('last-refresh').textContent =
+          'Actualisé à ' + now.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+      } catch (e) {
+        console.error(e);
+        document.getElementById('last-refresh').textContent = 'Erreur : ' + e.message;
+      } finally {
+        icon.classList.remove('spin');
+      }
+    }
+
+    // ── Toast ──────────────────────────────────────────────
+    function toast(msg, type = 'success') {
+      const id = 'toast-' + Date.now();
+      const icons = { success: 'fa-circle-check', error: 'fa-circle-xmark', info: 'fa-circle-info' };
+      const colors = { success: 'linear-gradient(135deg,#10b981,#059669)', error: 'linear-gradient(135deg,#ef4444,#dc2626)', info: 'linear-gradient(135deg,#6366f1,#4f46e5)' };
+      const el = document.createElement('div');
+      el.id = id;
+      el.style.cssText = `background:${colors[type]||colors.info};color:#fff;font-size:.84rem;font-weight:600;padding:11px 16px;border-radius:10px;display:flex;align-items:center;gap:9px;box-shadow:0 4px 16px rgba(0,0,0,.18);margin-bottom:8px;animation:toastIn .25s ease;min-width:220px;`;
+      el.innerHTML = `<i class="fas ${icons[type]||icons.info}"></i><span>${msg}</span>`;
+      document.getElementById('toast-wrap').appendChild(el);
+      setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateX(20px)'; el.style.transition = '.25s'; setTimeout(() => el.remove(), 300); }, 3200);
+    }
+
+    // ── Export CSV ─────────────────────────────────────────
+    async function exportCSV() {
+      try {
+        const res = await fetch('/api/responses?page=1');
+        const json = await res.json();
+        const total = json.total;
+        if (!total) { toast('Aucune donnée à exporter', 'info'); return; }
+        const all = await fetch(`/api/responses?page=1&limit=${total}`);
+        // fallback: export page 1 only if endpoint doesn't support limit
+        const data = json.data;
+        if (!data.length) { toast('Aucune donnée', 'info'); return; }
+        const keys = Object.keys(data[0]);
+        const csv = [keys.join(','), ...data.map(r => keys.map(k => `"${(r[k]||'').toString().replace(/"/g,'""')}"`).join(','))].join('\n');
+        const a = document.createElement('a');
+        a.href = 'data:text/csv;charset=utf-8,﻿' + encodeURIComponent(csv);
+        a.download = `reponses-crmef-${new Date().toISOString().slice(0,10)}.csv`;
+        a.click();
+        toast(`${data.length} réponse(s) exportées en CSV`);
+      } catch(e) { toast('Erreur export : ' + e.message, 'error'); }
+    }
+
+    // ── Seed demo data ─────────────────────────────────────
+    async function seedData() {
+      if (!confirm('Ajouter 40 réponses de démonstration ?')) return;
+      try {
+        const res = await fetch('/api/seed', { method: 'POST' });
+        const json = await res.json();
+        if (json.success) { toast(json.message); loadAll(); }
+      } catch(e) { toast('Erreur : ' + e.message, 'error'); }
+    }
+
+    // ── Sidebar ────────────────────────────────────────────
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+      document.getElementById('sidebar-overlay').classList.toggle('show');
+    }
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('sidebar-overlay').classList.remove('show');
+    }
+    function scrollTo(id) {
+      document.getElementById(id)?.scrollIntoView({ behavior:'smooth', block:'start' });
+      closeSidebar();
+    }
+
+    // ── Active nav via IntersectionObserver ───────────────
+    function initActiveNav() {
+      const sections = ['overview','section1','section2','section3','section4','section5','section6','responses'];
+      const navLinks = document.querySelectorAll('#sidebar .nav-link');
+      const obs = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            navLinks.forEach(a => a.classList.remove('active'));
+            const link = document.querySelector(`#sidebar .nav-link[href="#${e.target.id}"]`);
+            if (link) link.classList.add('active');
+          }
+        });
+      }, { rootMargin: '-40% 0px -55% 0px' });
+      sections.forEach(id => { const el = document.getElementById(id); if (el) obs.observe(el); });
+    }
+
+    // ── Auto-refresh every 60s ─────────────────────────────
+    loadAll();
+    initActiveNav();
+    setInterval(loadAll, 60000);
+
+    // ── Toast animation keyframe ───────────────────────────
+    const ks = document.createElement('style');
+    ks.textContent = `@keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}`;
+    document.head.appendChild(ks);
+  </script>
+
+  <!-- Toast container -->
+  <div id="toast-wrap" style="position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;align-items:flex-end;"></div>
+</body>
+</html>

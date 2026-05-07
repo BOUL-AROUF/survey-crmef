@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Questionnaire QCM — Technologies Numériques & Enseignement</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+
+    /* ── Step panels ── */
+    .step-panel { display: none; }
+    .step-panel.active { display: block; animation: fadeUp 0.3s ease; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Radio card (CSS-only selected state) ── */
+    .radio-card input:checked ~ .card-face {
+      border-color: #4f46e5;
+      background: #eef2ff;
+      box-shadow: 0 0 0 3px #c7d2fe;
+    }
+    .radio-card input:checked ~ .card-face .icon-wrap {
+      background: #c7d2fe;
+    }
+    .radio-card input:checked ~ .card-face .icon-wrap i {
+      color: #4338ca;
+    }
+    .radio-card input:checked ~ .card-face .chk-badge {
+      opacity: 1;
+      transform: scale(1);
+    }
+    .chk-badge {
+      opacity: 0;
+      transform: scale(0);
+      transition: opacity 0.2s, transform 0.2s;
+    }
+
+    /* ── Radio list (CSS-only selected state) ── */
+    .radio-list input:checked ~ .list-face {
+      border-color: #4f46e5;
+      background: #eef2ff;
+    }
+    .radio-list input:checked ~ .list-face .dot-ring {
+      border-color: #4f46e5;
+    }
+    .radio-list input:checked ~ .list-face .dot-fill {
+      transform: scale(1);
+    }
+    .dot-fill { transform: scale(0); transition: transform 0.2s; }
+    .radio-list input:checked ~ .list-face .row-icon {
+      background: #4f46e5;
+    }
+    .radio-list input:checked ~ .list-face .row-icon i {
+      color: white;
+    }
+
+    /* ── Scale card (CSS-only selected state) ── */
+    .scale-card input:checked ~ .scale-face {
+      background: #4f46e5;
+      border-color: #4f46e5;
+      color: white;
+      box-shadow: 0 4px 14px rgba(79,70,229,0.35);
+    }
+    .scale-card input:checked ~ .scale-face .scale-pip {
+      background: rgba(255,255,255,0.4);
+    }
+
+    /* ── Pill checkbox (CSS-only selected state) ── */
+    .pill-input:checked ~ .pill-face {
+      border-color: #4f46e5;
+      background: #eef2ff;
+      color: #3730a3;
+    }
+    .pill-input:checked ~ .pill-face .pill-icon {
+      background: #4f46e5;
+    }
+    .pill-input:checked ~ .pill-face .pill-icon i {
+      color: white;
+    }
+
+    /* ── Error highlight ── */
+    .q-error .card-face,
+    .q-error .list-face,
+    .q-error .scale-face {
+      border-color: #fca5a5 !important;
+      background: #fff1f2 !important;
+    }
+
+    /* ── Step tracker ── */
+    .step-node .s-circle {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      border: 2px solid #e2e8f0;
+      background: white;
+      color: #94a3b8;
+      transition: all 0.25s;
+      flex-shrink: 0;
+    }
+    .step-node.s-done .s-circle {
+      background: #10b981; border-color: #10b981; color: white;
+    }
+    .step-node.s-active .s-circle {
+      background: #4f46e5; border-color: #4f46e5; color: white;
+      box-shadow: 0 0 0 4px #c7d2fe;
+    }
+    .step-node .s-label {
+      font-size: 0.65rem; margin-top: 5px; color: #94a3b8;
+      font-weight: 500; white-space: nowrap;
+      display: none;
+    }
+    @media(min-width:480px) { .step-node .s-label { display: block; } }
+    .step-node.s-done .s-label  { color: #10b981; font-weight: 600; }
+    .step-node.s-active .s-label { color: #4f46e5; font-weight: 700; }
+    .s-line {
+      flex: 1; height: 2px;
+      background: #e2e8f0;
+      margin-top: -18px;   /* align with circle center */
+      transition: background 0.3s;
+    }
+    .s-line.done { background: #10b981; }
+
+    /* ── Q-number badge ── */
+    .q-num {
+      width: 26px; height: 26px; border-radius: 50%;
+      background: #eef2ff; color: #4f46e5;
+      font-size: 0.7rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* ── Nav buttons ── */
+    .nav-btn { transition: transform 0.15s, box-shadow 0.15s; }
+    .nav-btn:hover { transform: translateY(-1px); }
+    .nav-btn:active { transform: translateY(0); }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 3px; }
+
+    /* ── Success overlay ── */
+    #success-overlay { transition: opacity 0.35s; }
+  </style>
+</head>
+<body class="min-h-screen pb-20" style="background: linear-gradient(135deg,#f0f4ff 0%,#f5f3ff 50%,#faf5ff 100%);">
+
+  <!-- ═══════════ HEADER ═══════════ -->
+  <header class="sticky top-0 z-30 shadow-md" style="background:linear-gradient(90deg,#4338ca,#5b21b6);">
+    <div class="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(255,255,255,0.15);">
+        <i class="fas fa-atom text-white"></i>
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="font-bold text-white text-sm leading-tight truncate">Questionnaire QCM — CRMEF</div>
+        <div class="text-indigo-200 text-xs truncate">Physique-Chimie &amp; Technologies Numériques · 2025–2026</div>
+      </div>
+      <!-- Progress badge (shown after step 1) -->
+      <div id="hdr-progress" class="hidden flex-shrink-0 text-xs font-bold text-indigo-200 bg-white/10 rounded-lg px-2.5 py-1.5 tabular-nums">
+        <span id="hdr-step">1</span>/6
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══════════ MAIN ═══════════ -->
+  <main class="max-w-2xl mx-auto px-4 pt-5">
+
+    <!-- ── Hero / Titre de l'étude ── -->
+    <div id="hero-card" class="mb-4 rounded-2xl overflow-hidden shadow-sm" style="border:1.5px solid #e0e7ff;">
+      <!-- Banner gradient -->
+      <div class="px-5 py-5" style="background:linear-gradient(135deg,#312e81 0%,#4338ca 45%,#5b21b6 100%);">
+        <div class="flex items-start gap-4">
+          <div class="w-14 h-14 rounded-2xl flex-shrink-0 flex items-center justify-center" style="background:rgba(255,255,255,0.14);border:1.5px solid rgba(255,255,255,0.18);">
+            <i class="fas fa-flask-vial text-white text-2xl"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="text-indigo-200 text-xs font-semibold uppercase tracking-widest mb-1">Recherche scientifique · CRMEF</div>
+            <h1 class="text-white font-extrabold leading-snug" style="font-size:1rem;">
+              Impact des Technologies Numériques<br>sur l'Enseignement de la Physique-Chimie
+            </h1>
+            <p class="text-indigo-200 text-xs mt-1.5">Centre Régional des Métiers de l'Éducation et de la Formation</p>
+          </div>
+        </div>
+      </div>
+      <!-- Méta-infos -->
+      <div class="bg-white px-5 py-3 flex flex-wrap gap-x-5 gap-y-2 border-b border-slate-100">
+        <div class="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+          <i class="fas fa-clock text-indigo-400"></i> Durée estimée : <span class="font-bold text-slate-700">5 – 8 min</span>
+        </div>
+        <div class="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+          <i class="fas fa-list-ol text-indigo-400"></i> <span class="font-bold text-slate-700">20 questions</span> · 6 sections
+        </div>
+        <div class="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+          <i class="fas fa-shield-halved text-emerald-500"></i> Réponses <span class="font-bold text-emerald-700">anonymes</span>
+        </div>
+      </div>
+      <!-- Description -->
+      <div class="bg-white px-5 py-4">
+        <p class="text-sm text-slate-600 leading-relaxed">
+          Ce questionnaire s'adresse aux <strong class="text-slate-800">enseignants de Physique-Chimie</strong>.
+          Il vise à analyser l'impact des outils numériques sur l'apprentissage des élèves et à identifier
+          les pratiques pédagogiques numériques les plus efficaces. Vos réponses contribuent directement
+          à une recherche sur l'intégration du numérique dans l'éducation au Maroc.
+        </p>
+        <div class="mt-3 flex items-center gap-2 text-xs text-slate-400">
+          <i class="fas fa-circle-info text-indigo-300"></i>
+          Les questions marquées <strong class="text-red-400">*</strong> sont obligatoires — répondez à toutes pour valider chaque étape.
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Step tracker card ── -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-4">
+      <!-- Circles + connectors -->
+      <div class="flex items-start mb-3">
+        <div class="step-node s-active flex flex-col items-center" data-step="1">
+          <div class="s-circle"><i class="fas fa-user text-sm s-icon"></i></div>
+          <span class="s-label">Profil</span>
+        </div>
+        <div class="s-line mt-[17px]"></div>
+        <div class="step-node flex flex-col items-center" data-step="2">
+          <div class="s-circle"><i class="fas fa-laptop text-sm s-icon"></i></div>
+          <span class="s-label">Outils</span>
+        </div>
+        <div class="s-line mt-[17px]"></div>
+        <div class="step-node flex flex-col items-center" data-step="3">
+          <div class="s-circle"><i class="fas fa-brain text-sm s-icon"></i></div>
+          <span class="s-label">Impact</span>
+        </div>
+        <div class="s-line mt-[17px]"></div>
+        <div class="step-node flex flex-col items-center" data-step="4">
+          <div class="s-circle"><i class="fas fa-balance-scale text-sm s-icon" style="font-size:11px"></i></div>
+          <span class="s-label">Comparaison</span>
+        </div>
+        <div class="s-line mt-[17px]"></div>
+        <div class="step-node flex flex-col items-center" data-step="5">
+          <div class="s-circle"><i class="fas fa-road text-sm s-icon"></i></div>
+          <span class="s-label">Difficultés</span>
+        </div>
+        <div class="s-line mt-[17px]"></div>
+        <div class="step-node flex flex-col items-center" data-step="6">
+          <div class="s-circle"><i class="fas fa-star text-sm s-icon"></i></div>
+          <span class="s-label">Avis</span>
+        </div>
+      </div>
+      <!-- Label + bar -->
+      <div class="flex items-center justify-between mb-1.5">
+        <span class="text-xs font-bold text-indigo-700" id="lbl-step">Étape 1 / 6</span>
+        <span class="text-xs text-slate-500 font-medium" id="lbl-section">Informations générales</span>
+      </div>
+      <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+        <div id="progress-bar"
+             class="h-1.5 rounded-full transition-all duration-500"
+             style="width:16.67%;background:linear-gradient(90deg,#4f46e5,#7c3aed)"></div>
+      </div>
+    </div>
+
+    <!-- ── Error banner ── -->
+    <div id="error-banner"
+         class="hidden mb-4 rounded-xl px-4 py-3 flex items-center gap-3 text-sm font-medium"
+         style="background:#fff1f2;border:1.5px solid #fecaca;color:#b91c1c;">
+      <i class="fas fa-triangle-exclamation flex-shrink-0"></i>
+      <span>Veuillez répondre à toutes les questions obligatoires <strong>(*)</strong> avant de continuer.</span>
+    </div>
+
+    <form id="survey-form" novalidate>
+
+    <!-- ═══ STEP 1 : Informations générales ═══ -->
+    <div class="step-panel active bg-white rounded-2xl shadow-sm overflow-hidden" id="step-1"
+         style="border:1.5px solid #e0e7ff; border-top:3px solid #4f46e5;">
+      <div class="px-6 py-4 flex items-center gap-3" style="background:linear-gradient(90deg,#4f46e5,#6d28d9);">
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:rgba(255,255,255,0.18);">
+          <i class="fas fa-user text-white"></i>
+        </div>
+        <div>
+          <h2 class="text-white font-bold text-base">Informations générales</h2>
+          <p class="text-indigo-200 text-xs">Questions 1 – 4</p>
+        </div>
+      </div>
+
+      <div class="p-6 space-y-7">
+
+        <!-- Q1 -->
+        <div class="question-group" data-name="q1" data-required="true">
+          <div class="flex items-center gap-2.5 mb-3">
+            <span class="q-num">1</span>
+            <p class="font-semibold text-slate-800">Sexe <span class="text-red-400">*</span></p>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <label class="radio-card cursor-pointer">
+              <input type="radio" name="q1" value="Homme" class="sr-only">
+              <div class="card-face border-2 border-slate-200 rounded-2xl p-5 text-center transition-all hover:border-indigo-300 hover:shadow-sm relative">
+                <div class="chk-badge absolute top-3 right-3 w-5 h-5 bg-indigo-500 rounded-full flex items-center justify-center">
+                  <i class="fas fa-check text-white" style="font-size:9px"></i>
+                </div>
+                <div class="icon-wrap w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3 transition-colors">
+                  <i class="fas fa-mars text-slate-500 text-2xl transition-colors"></i>
+                </div>
+                <div class="font-semibold text-slate-700 text-sm">Homme</div>
+              </div>
+            </label>
+            <label class="radio-card cursor-pointer">
+              <input type="radio" name="q1" value="Femme" class="sr-only">
+              <div class="card-face border-2 border-slate-200 rounded-2xl p-5 text-center transition-all hover:border-indigo-300 hover:shadow-sm relative">
+                <div class="chk-badge absolute top-3 right-3 w-5 h-5 bg-indigo-500 rounded-full flex items-center justify-center">
+                  <i class="fas fa-check text-white" style="font-size:9px"></i>
+                </div>
+                <div class="icon-wrap w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3 transition-colors">
+                  <i class="fas fa-venus text-slate-500 text-2xl transition-colors"></i>
+                </div>
+                <div class="font-semibold text-slate-700 text-sm">Femme</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="border-t border-slate-100"></div>
+
+        <!-- Q2 -->
+        <div class="question-group" data-name="q2" data-required="true">
+          <div class="flex items-center gap-2.5 mb-3">
+            <span class="q-num">2</span>
+            <p class="font-semibold text-slate-800">Expérience professionnelle <span class="text-red-400">*</span></p>
+          </div>
+          <div class="space-y-2">
+            <label class="radio-list cursor-pointer block">
+              <input type="radio" name="q2" value="Moins de 5 ans" class="sr-only">
+              <div class="list-face border-2 border-slate-200 rounded-xl px-4 py-3.5 flex items-center gap-3 transition-all hover:border-indigo-300 hover:bg-indigo-50/40">
+                <div class="dot-ring w-5 h-5 border-2 border-slate-300 rounded-full flex-shrink-0 flex items-center justify-center transition-colors">
+                  <div class="dot-fill w-2.5 h-2.5 rounded-full bg-indigo-500"></div>
+                </div>
+                <span class="font-medium text-slate-700 flex-1">Moins de 5 ans</span>
+                <div class="row-icon w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0 transition-colors">
+                  <i class="fas fa-seedling text-slate-500 text-sm transition-colors"></i>
+                </div>
+              </div>
+            </label>
+            <label class="radio-list cursor-pointer block">
+              <input type="radio" name="q2" value="5–10 ans" class="sr-only">
+              <div class="list-face border-2 border-slate-200 rounded-xl px-4 py-3.5 flex items-center gap-3 transition-all hover:border-indigo-300 hover:bg-indigo-50/40">
+                <div class="dot-ring w-5 h-5 border-2 border-slate-300 rounded-full flex-shrink-0 flex items-center justify-center transition-colors">
+                  <div class="dot-fill w-2.5 h-2.5 rounded-full bg-indigo-500"></div>
+                </div>
+                <span class="font-medium text-slate-700 flex-1">5 – 10 ans</span>
+                <div class="row-icon w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0 transition-colors">
+                  <i class="fas fa-tree text-slate-500 text-sm transition-colors"></i>
+                </div>
+              </div>
+            </label>
+            <label class="radio-list cursor-pointer block">
+              <input type="radio" name="q2" value="Plus de 10 ans" class="sr-only">
+              <div class="list-face border-2 border-slate-200 rounded-xl px-4 py-3.5 flex items-center gap-3 transition-all hover:border-indigo-300 hover:bg-indigo-50/40">
+                <div class="dot-ring w-5 h-5 border-2 border-slate-300 rounded-full flex-shrink-0 flex items-center justify-center transition-colors">
+                  <div class="dot-fill w-2.5 h-2.5 rounded-full bg-indigo-500"></div>
+                </div>
+                <span class="font-medium text-slate-700 flex-1">Plus de 10 ans</span>
+                <div class="row-icon w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0 transition-colors">
+                  <i class="fas fa-award text-slate-500 text-sm transition-colors"></i>
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="border-t border-slate-100"></div>
+
+        <!-- Q3 -->
+        <div class="question-group" data-name="q3" data-required="true">
+          <div class="flex items-center gap-2.5 mb-3">
+            <span class="q-num">3</span>
+            <p class="font-semibold text-slate-800">Type d'établissement <span class="text-red-400">*</span></p>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <label class="radio-card cursor-pointer">
+              <input type="radio" name="q3" value="Public" class="sr-only">
+              <div class="card-face border-2 border-slate-200 rounded-2xl p-5 text-center transition-all hover:border-indigo-300 hover:shadow-sm relative">
+                <div class="chk-badge absolute top-3 right-3 w-5 h-5 bg-indigo-500 rounded-full flex items-center justify-center">
+                  <i class="fas fa-check text-white" style="font-size:9px"></i>
+                </div>
+                <div class="icon-wrap w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3 transition-colors">
+                  <i class="fas fa-school text-slate-500 text-2xl transition-colors"></i>
+                </div>
+                <div class="font-semibold text-slate-700 text-sm">Public</div>
+              </div>
+            </label>
+            <label class="radio-card cursor-pointer">
+              <input type="radio" name="q3" value="Privé" class="sr-only">
+              <div class="card-face border-2 border-slate-200 rounded-2xl p-5 text-center transition-all hover:border-indigo-300 hover:shadow-sm relative">
+                <div class="chk-badge absolute top-3 right-3 w-5 h-5 bg-indigo-500 rounded-full flex items-center justify-center">
+                  <i class="fas fa-check text-white" style="font-size:9px"></i>
+                </div>
+                <div class="icon-wrap w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3 transition-colors">
+                  <i class="fas fa-building text-slate-500 text-2xl transition-colors"></i>
+                </div>
+                <div class="font-semibold text-slate-700 text-sm">Privé</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="border-t border-slate-100"></div>
+
+        <!-- Q4 -->
+        <div class="question-group" data-name="q4" data-required="true">
+          <div class="flex items-center gap-2.5 mb-3">
+            <span class="q-num">4</span>
+            <p class="font-semibold text-slate-800">Utilisez-vous le numérique dans votre enseignement ? <span class="text-red-400">*</span></p>
+          </div>
+          <div class="grid grid-cols-3 gap-3">
+            <label class="radio-card cursor-pointer">
+              <input type="radio" name="q4" value="Oui" class="sr-only">
+              <div class="card-face border-2 border-slate-200 rounded-2xl p-5 text-center transition-all hover:border-indigo-300 hover:shadow-sm relative">
+                <div class="chk-badge absolute top-3 right-3 w-5 h-5 bg-indigo-500 rounded-full flex items-center justify-center">
+                  <i class="fas fa-check text-white" style="font-size:9px"></i>
+                </div>
+                <div class="icon-wrap w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3 transition-colors">
+                  <i class="fas fa-circle-check text-slate-500 text-2xl transition-colors"></i>
+                </div>
+                <div class="font-semibold text-slate-700 text-sm">Oui</div>
+              </div>
+            </label>
+            <label class="radio-card cursor-pointer">
+              <input type="radio" name="q4" value="Parfois" class="sr-only">
+              <div class="card-face border-2 border-slate-200 rounded-2xl p-5 text-center transition-all hover:border-indigo-300 hover:shadow-sm relative">
+                <div class="chk-badge absolute top-3 right-3 w-5 h-5 bg-indigo-500 rounded-full flex items-center justify-center">
+                  <i class="fas fa-check text-white" style="font-size:9px"></i>
+                </div>
+                <div class="icon-wrap w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3 transition-colors">
+                  <i class="fas fa-circle-half-stroke text-slate-500 text-2xl transition-colors"></i>
+                </div>
+                <div class="font-semibold text-slate-700 text-sm">Parfois</div>
+              </div>
+            </label>
+            <label class="radio-card cursor-pointer">
+              <input type="radio" name="q4" value="Non" class="sr-only">
+              <div class="card-face border-2 border-slate-200 rounded-2xl p-5 text-center transition-all hover:border-indigo-300 hover:shadow-sm relative">
+                <div class="chk-badge absolute top-3 right-3 w-5 h-5 bg-indigo-500 rounded-full flex items-center justify-center">
+                  <i class="fas fa-check text-white" style="font-size:9px"></i>
+                </div>
+                <div class="icon-wrap w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3 transition-colors">
+                  <i class="fas fa-circle-xmark text-slate-500 text-2xl transition-colors"></i>
+                </div>
+                <div class="font-semibold text-slate-700 text-sm">Non</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /step-1 -->
+
+    <!-- ═══ STEP 2 : Utilisation des technologies ═══ -->
+    <div class="step-panel bg-white rounded-2xl shadow-sm overflow-hidden" id="step-2"
+         style="border:1.5px solid #dbeafe; border-top:3px solid #3b82f6;">
+      <div class="px-6 py-4 flex items-center gap-3" style="background:linear-gradient(90deg,#2563eb,#4f46e5);">
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:rgba(255,255,255,0.18);">
+          <i class="fas fa-laptop text-white"></i>
+        </div>
+        <div>
+          <h2 class="text-white font-bold text-base">Utilisation des technologies</h2>
+          <p class="text-blue-100 text-xs">Questions 5 – 7</p>
+        </div>
+      </div>
+      <div class="p-6 space-y-7">
+
+        <!-- Q5 -->
+        <div class="question-group" data-name="q5" data-required="false">
+          <div class="flex items-center gap-2.5 mb-1">
+            <span class="q-num">5</span>
+            <p class="font-semibold text-slate-800">Outils utilisés</p>
+          </div>
+          <p class="text-xs text-slate-400 mb-3 ml-9">Plusieurs choix possibles</p>
+          <div class="flex flex-wrap gap-2">
+            <label class="cursor-pointer"><input type="checkbox" name="q5" value="Ordinateur" class="sr-only pill-input">
+              <div class="pill-face border-2 border-slate-200 rounded-xl px-3.5 py-2.5 flex items-center gap-2.5 transition-all hover:border-indigo-300 select-none">
+                <span class="pill-icon w-7 h-7 rounded-lg bg-slate-100 flex-shrink-0 flex items-center justify-center transition-colors">
+                  <i class="fas fa-desktop text-slate-500 text-sm transition-colors"></i>
+                </span>
+                <span class="text-sm font-medium text-slate-600">Ordinateur</span>
+              </div></label>
+            <label class="cursor-pointer"><input type="checkbox" name="q5" value="Vidéoprojecteur" class="sr-only pill-input">
+              <div class="pill-face border-2 border-slate-200 rounded-xl px-3.5 py-2.5 flex items-center gap-2.5 transition-all hover:border-indigo-300 select-none">
+                <span class="pill-icon w-7 h-7 rounded-lg bg-slate-100 flex-shrink-0 flex items-center justify-center transition-colors">
+                  <i class="fas fa-film text-slate-500 text-sm transition-colors"></i>
+                </span>
+                <span class="text-sm font-medium text-slate-600">Vidéoprojecteur</span>
+              </div></label>
+            <label class="cursor-pointer"><input type="checkbox" name="q5" value="Simulations" class="sr-only pill-input">
+              <div class="pill-face border-2 border-slate-200 rounded-xl px-3.5 py-2.5 flex items-center gap-2.5 transition-all hover:border-indigo-300 select-none">
+                <span class="pill-icon w-7 h-7 rounded-lg bg-slate-100 flex-shrink-0 flex items-center justify-center transition-colors">
+                  <i class="fas fa-flask text-slate-500 text-sm transition-colors"></i>
+                </span>
+                <span class="text-sm font-medium text-slate-600">Simulations</span>
+              </div></label>
+            <label class="cursor-pointer"><input type="checkbox" name="q5" value="Vidéos éducatives" class="sr-only pill-input">
+              <div class="pill-face border-2 border-slate-200 rounded-xl px-3.5 py-2.5 flex items-center gap-2.5 transition-all hover:border-indigo-300 select-none">
+                <span class="pill-icon w-7 h-7 rounded-lg bg-slate-100 flex-shrink-0 flex items-center justify-center transition-colors">
+                  <i class="fas fa-video text-slate-500 text-sm transition-colors"></i>
+                </span>
+                <span class="text-sm font-medium text-slate-600">Vidéos éducatives</span>
+              </div></label>
+            <label class="cursor-pointer"><input type="checkbox" name="q5" value="Plateformes numériques" class="sr-only pill-input">
+              <div class="pill-face border-2 border-slate-200 rounded-xl px-3.5 py-2.5 flex items-center gap-2.5 transition-all hover:border-indigo-300 select-none">
+                <span class="pill-icon w-7 h-7 rounded-lg bg-slate-100 flex-shrink-0 flex items-center justify-center transition-colors">
+                  <i class="fas fa-globe text-slate-500 text-sm transition-colors"></i>
+                </span>
+                <span class="text-sm font-medium text-slate-600">Plateformes numériques</span>
+              </div></label>
+          </div>
+        </div>
+
+        <div class="border-t border-slate-100"></div>
+
+        <!-- Q6 -->
+        <div class="question-group" data-name="q6" data-required="true">
+          <div class="flex items-center gap-2.5 mb-3">
+            <span class="q-num">6</span>
+            <p class="font-semibold text-slate-800">Fréquence d'utilisation <span class="text-red-400">*</span></p>
+          </div>
+          <div class="flex gap-2 flex-wrap sm:flex-nowrap">
+            <label class="scale-card cursor-pointer flex-1 min-w-[60px]"><input type="radio" name="q6" value="Toujours" class="sr-only">
+              <div class="scale-face border-2 border-slate-200 rounded-xl py-3.5 text-center transition-all hover:border-indigo-300 hover:bg-indigo-50/50">
+                <div class="scale-pip w-1.5 h-1.5 rounded-full bg-slate-300 mx-auto mb-2 transition-colors"></div>
+                <div class="text-xs font-semibold text-slate-600 leading-tight">Toujours</div>
+              </div></label>
+            <label class="scale-card cursor-pointer flex-1 min-w-[60px]"><input type="radio" name="q6" value="Souvent" class="sr-only">
+              <div class="scale-face border-2 border-slate-200 rounded-xl py-3.5 text-center transition-all hover:border-indigo-300 hover:bg-indigo-50/50">
+                <div class="scale-pip w-1.5 h-1.5 rounded-full bg-slate-300 mx-auto mb-2 transition-colors"></div>
+                <div class="text-xs font-semibold text-slate-600 leading-tight">Souvent</div>
+              </div></label>
+            <label class="scale-card cursor-pointer flex-1 min-w-[60px]"><input type="radio" name="q6" value="Parfois" class="sr-only">
+              <div class="scale-face border-2 border-slate-200 rounded-xl py-3.5 text-center transition-all hover:border-indigo-300 hover:bg-indigo-50/50">
+                <div class="scale-pip w-1.5 h-1.5 rounded-full bg-slate-300 mx-auto mb-2 transition-colors"></div>
+                <div class="text-xs font-semibold text-slate-600 leading-tight">Parfois</div>
+              </div></label>
+            <label class="scale-card cursor-pointer flex-1 min-w-[60px]"><input type="radio" name="q6" value="Rarement" class="sr-only">
+              <div class="scale-face border-2 border-slate-200 rounded-xl py-3.5 text-center transition-all hover:border-indigo-300 hover:bg-indigo-50/50">
+                <div class="scale-pip w-1.5 h-1.5 rounded-full bg-slate-300 mx-auto mb-2 transition-colors"></div>
+                <div class="text-xs font-semibold text-slate-600 leading-tight">Rarement</div>
+              </div></label>
+            <label class="scale-card cursor-pointer flex-1 min-w-[60px]"><input type="radio" name="q6" value="Jamais" class="sr-only">
+              <div class="scale-face border-2 border-slate-200 rounded-xl py-3.5 text-center transition-all hover:border-indigo-300 hover:bg-indigo-50/50">
+                <div class="scale-pip w-1.5 h-1.5 rounded-full bg-slate-300 mx-auto mb-2 transition-colors"></div>
+                <div class="text-xs font-semibold text-slate-600 leading-tight">Jamais</div>
+              </div></label>
+          </div>
+          <div class="flex justify-between text-xs text-slate-400 mt-1.5 px-1">
+            <span><i class="fas fa-arrow-right text-xs mr-1"></i>Très fréquent</span>
+            <span>Jamais<i class="fas fa-arrow-left text-xs ml-1"></i></span>
+          </div>
+        </div>
+
+        <div class="border-t border-slate-100"></div>
+
+        <!-- Q7 -->
+        <div class="question-group" data-name="q7" data-required="false">
+          <div class="flex items-center gap-2.5 mb-1">
+            <span class="q-num">7</span>
+            <p class="font-semibold text-slate-800">Mode d'utilisation</p>
+          </div>
+          <p class="text-xs text-slate-400 mb-3 ml-9">Plusieurs choix possibles</p>
+          <div class="flex flex-wrap gap-2">
+            <label class="cursor-pointer"><input type="checkbox" name="q7" value="Présentation du cours" class="sr-only pill-input">
+              <div class="pill-face border-2 border-slate-200 rounded-xl px-3.5 py-2.5 flex items-center gap-2.5 transition-all hover:border-indigo-300 select-none">
+                <span class="pill-icon w-7 h-7 rounded-lg bg-slate-100 flex-shrink-0 flex items-center justify-center transition-colors">
+                  <i class="fas fa-chalkboard text-slate-500 text-sm transition-colors"></i>
+                </span>
+                <span class="text-sm font-medium text-slate-600">Présentation du cours</span>
+              </div></label>
+            <label class="cursor-pointer"><input type="checkbox" name="q7" value="Illustration (vidéos/simulations)" class="sr-only pill-input">
+              <div class="pill-face border-2 border-slate-200 rounded-xl px-3.5 py-2.5 flex items-center gap-2.5 transition-all hover:border-indigo-300 select-none">
+                <span class="pill-icon w-7 h-7 rounded-lg bg-slate-100 flex-shrink-0 flex items-center justify-center transition-colors">
+                  <i class="fas fa-play text-slate-500 text-sm transition-colors"></i>
+                </span>
+                <span class="text-sm font-medium text-slate-600">Illustration</span>
+              </div></label>
+            <label class="cursor-pointer"><input type="checkbox" name="q7" value="Exercices interactifs" class="sr-only pill-input">
+              <div class="pill-face border-2 border-slate-200 rounded-xl px-3.5 py-2.5 flex items-center gap-2.5 transition-all hover:border-indigo-300 select-none">
+                <span class="pill-icon w-7 h-7 rounded-lg bg-slate-100 flex-shrink-0 flex items-center justify-center transition-colors">
+                  <i class="fas fa-gamepad text-slate-500 text-sm transition-colors"></i>
+                </span>
+                <span class="text-sm font-medium text-slate-600">Exercices interactifs</span>
+              </div></label>
+            <label class="cursor-pointer"><input type="checkbox" name="q7" value="Évaluation" class="sr-only pill-input">
+              <div class="pill-face border-2 border-slate-200 rounded-xl px-3.5 py-2.5 flex items-center gap-2.5 transition-all hover:border-indigo-300 select-none">
+                <span class="pill-icon w-7 h-7 rounded-lg bg-slate-100 flex-shrink-0 flex items-center justify-center transition-colors">
+                  <i class="fas fa-clipboard-check text-slate-500 text-sm transition-colors"></i>
+                </span>
+                <span class="text-sm font-medium text-slate-600">Évaluation</span>
+              </div></label>
+            <label class="cursor-pointer"><input type="checkbox" name="q7" value="Recherche d'informations" class="sr-only pill-input">
+              <div class="pill-face border-2 border-slate-200 rounded-xl px-3.5 py-2.5 flex items-center gap-2.5 transition-all hover:border-indigo-300 select-none">
+                <span class="pill-icon w-7 h-7 rounded-lg bg-slate-100 flex-shrink-0 flex items-center justify-center transition-colors">
+                  <i class="fas fa-magnifying-glass text-slate-500 text-sm transition-colors"></i>
+                </span>
+                <span class="text-sm font-medium text-slate-600">Recherche</span>
+              </div></label>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /step-2 -->
+
+    <!-- ═══ STEP 3 : Impact sur l'apprentissage ═══ -->
+    <div class="step-panel bg-white rounded-2xl shadow-sm overflow-hidden" id="step-3"
+         style="border:1.5px solid #ccfbf1; border-top:3px solid #14b8a6;">
+      <div class="px-6 py-4 flex items-center gap-3" style="background:linear-gradient(90deg,#0d9488,#0891b2);">
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:rgba(255,255,255,0.18);">
+          <i class="fas fa-brain text-white"></i>
+        </div>
+        <div>
+          <h2 class="text-white font-bold text-base">Impact sur l'apprentissage</h2>
+          <p class="text-teal-100 text-xs">Questions 8 – 11</p>
+        </div>
+      </div>
+      <div class="p-6 space-y-7">
+
+        <!-- Q8, Q9, Q10 share the same scale pattern -->
+        <div class="question-group" data-name="q8" data-required="true">
+          <div class="flex items-center gap-2.5 mb-3">
+            <span class="q-num">8</span>
+            <p class="font-semibold text-slate-800">Impact sur la <strong>compréhension</strong> des élèves <span class="text-red-400">*</span></p>
+          </div>
+          <div class="flex gap-2">
+            <label class="scale-card cursor-pointer flex-1"><input type="radio" name="q8" value="Pas du tout" class="sr-only">
+              <div class="scale-face border-2 border-slate-200 rounded-xl py-3.5 text-center transition-all hover:border-indigo-300"><div class="scale-pip w-1.5 h-1.5 rounded-full bg-slate-300 mx-auto mb-2"></div><div class="text-xs font-semibold text-slate-600">Pas du tout</div></div></label>
+            <label class="scale-card cursor-pointer flex-1"><input type="radio" name="q8" value="Peu" class="sr-only">
+              <div class="scale-face border-2 border-slate-200 rounded-xl py-3.5 text-center transition-all hover:border-indigo-300"><div class="scale-pip w-1.5 h-1.5 rounded-full bg-slate-300 mx-auto mb-2"></div><div class="text-xs font-semibold text-slate-600">Peu</div></div></label>
+            <label class="scale-card cursor-pointer flex-1"><input type="radio" name="q8" value="Moyen" class="sr-only">
+              <div class="scale-face border-2 border-slate-200 rounded-xl py-3.5 text-center transition-all hover:border-indigo-300"><div class="scale-pip w-1.5 h-1.5 rounded-full bg-slate-300 mx-auto mb-2"></div><div class="text-xs font-semibold text-slate-600">Moyen</div></div></label>
+            <label class="scale-card cursor-pointer flex-1"><input type="radio" name="q8" value="Beaucoup" class="sr-only">
+              <div class="scale-face border-2 border-slate-200 rounded-xl py-3.5 text-center transition-all hover:border-indigo-300"><div class="scale-pip w-1.5 h-1.5 rounded-full bg-slate-300 mx-auto mb-2"></div><div class="text-xs font-semibold text-slate-600">Beaucoup</div></div></label>
+          </div>
+        </div>
+
+        <div class="border-t border-slate-100"></div>
+
+        <div class="question-group" data-name="q9" data-required="true">
+          <div class="flex items-center gap-2.5 mb-3">
+            <span class="q-num">9</span>
+            <p class="font-semibold text-slate-800">Impact sur la <strong>motivation</strong> des élèves <span class="text-red-400">*</span></p>
+          </div>
+          <div class="flex gap-2">
+            <label class="scale-card cursor-pointer flex-1"><input type="radio" name="q9" value="Pas du tout" class="sr-only">
+              <div class="scale-face border-2 border-slate-200 rounded-xl py-3.5 text-center transition-all hover:border-indigo-300"><div class="scale-pip w-1.5 h-1.5 rounded-full bg-slate-300 mx-auto mb-2"></div><div class="text-xs font-semibold text-slate-600">Pas du tout</div></div></label>
+            <label class="scale-card cursor-pointer flex-1"><input type="radio" name="q9" value="Peu" class="sr-only">
+              <div class="scale-face border-2 border-slate-200 rounded-xl py-3.5 text-center transition-all hover:border-indigo-300"><div class="scale-pip w-1.5 h-1.5 rounded-full bg-slate-300 mx-auto mb-2"></div><div class="text-xs font-semibold text-slate-600">Peu</div></div></label>
+            <label class="scale-card cursor-pointer flex-1"><input type="radio" name="q9" value="Moyen" class="sr-only">
+              <div class="scale-face border-2 border-slate-200 rounded-xl py-3.5 text-center transition-all hover:border-indigo-300"><div class="scale-pip w-1.5 h-1.5 rounded-full bg-slate-300 mx-auto mb-2"></div><div class="text-xs font-semibold text-slate-600">Moyen</div></div></label>
+            <label class="scale-card cursor-pointer flex-1"><input type="radio" name="q9" value="Beaucoup" class="sr-only">
+              <div class="scale-face border-2 border-slate-200 rounded-xl py-3.5 text-center transition-all hover:border-indigo-300"><div class="scale-pip w-1.5 h-1.5 rounded-full bg-slate-300 mx-auto mb-2"></div><div class="text-xs font-semibold text-slate-600">Beaucoup</div></div></label>
+          </div>
+        </div>
+
+        <div class="border-t border-slate-100"></div>
+
+        <div class="question-group" data-name="q10" data-required="true">
+          <div class="flex items-center gap-2.5 mb-3">
+            <span class="q-num">10</span>
+            <p class="font-semibold text-slate-800">Impact sur l'<strong>autonomie</strong> des élèves <span class="text-red-400">*</span></p>
+          </div>
+          <div class="flex gap-2">
+            <label class="scale-card cursor-pointer flex-1"><input type="radio" name="q10" value="Pas du tout" class="sr-only">
+              <div class="scale-face border-2 border-slate-200 rounded-xl py-3.5 text-center transition-all hover:border-indigo-300"><div class="scale-pip w-1.5 h-1.5 rounded-full bg-slate-300 mx-auto mb-2"></div><div class="text-xs font-semibold text-slate-600">Pas du tout</div></div></label>
+            <label class="scale-card cursor-pointer flex-1"><input type="radio" name="q10" value="Peu" class="sr-only">
+              <div class="scale-face border-2 border-slate-200 rounded-xl py-3.5 text-center transition-all hover:border-indigo-300"><div class="scale-pip w-1.5 h-1.5 rounded-full bg-slate-300 mx-auto mb-2"></div><div class="text-xs font-semibold text-slate-600">Peu</div></div></label>
+            <label class="scale-card cursor-pointer flex-1"><input type="radio" name="q10" value="Moyen" class="sr-only">
+              <div class="scale-face border-2 border-slate-200 rounded-xl py-3.5 text-center transition-all hover:border-indigo-300"><div class="scale-pip w-1.5 h-1.5 rounded-full bg-slate-300 mx-auto mb-2"></div><div class="text-xs font-semibold text-slate-600">Moyen</div></div></label>
+            <label class="scale-card cursor-pointer flex-1"><input type="radio" name="q10" value="Beaucoup" class="sr-only">
+              <div class="scale-face border-2 border-slate-200 rounded-xl py-3.5 text-center transition-all hover:border-indigo-300"><div class="scale-pip w-1.5 h-1.5 rounded-full bg-slate-300 mx-auto mb-2"></div><div class="text-xs font-semibold text-slate-600">Beaucoup</div></div></label>
+          </div>
+        </div>
+
+        <div class="border-t border-slate-100"></div>
+
+        <!-- Q11 -->
+        <div class="question-group" data-name="q11" data-required="true">
+          <div class="flex items-center gap-2.5 mb-3">
+            <span class="q-num">11</span>
+            <p class="font-semibold text-slate-800">Le numérique favorise-t-il l'engagement des élèves ? <span class="text-red-400">*</span></p>
+          </div>
+          <div class="grid grid-cols-3 gap-3">
+            <label class="radio-card cursor-pointer">
+              <input type="radio" name="q11" value="Oui" class="sr-only">
+              <div class="card-face border-2 border-slate-200 rounded-2xl p-4 text-center transition-all hover:border-indigo-300 hover:shadow-sm relative">
+                <div class="chk-badge absolute top-2 right-2 w-5 h-5 bg-indigo-500 rounded-full flex items-center justify-center">
+                  <i class="fas fa-check text-white" style="font-size:9px"></i>
+                </div>
+                <div class="icon-wrap w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-2 transition-colors">
+                  <i class="fas fa-face-smile text-slate-500 text-xl transition-colors"></i>
+                </div>
+                <div class="font-semibold text-slate-700 text-xs">Oui</div>
+              </div>
+            </label>
+            <label class="radio-card cursor-pointer">
+              <input type="radio" name="q11" value="Parfois" class="sr-only">
+              <div class="card-face border-2 border-slate-200 rounded-2xl p-4 text-center transition-all hover:border-indigo-300 hover:shadow-sm relative">
+                <div class="chk-badge absolute top-2 right-2 w-5 h-5 bg-indigo-500 rounded-full flex items-center justify-center">
+                  <i class="fas fa-check text-white" style="font-size:9px"></i>
+                </div>
+                <div class="icon-wrap w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-2 transition-colors">
+                  <i class="fas fa-face-meh text-slate-500 text-xl transition-colors"></i>
+                </div>
+                <div class="font-semibold text-slate-700 text-xs">Parfois</div>
+              </div>
+            </label>
+            <label class="radio-card cursor-pointer">
+              <input type="radio" name="q11" value="Non" class="sr-only">
+              <div class="card-face border-2 border-slate-200 rounded-2xl p-4 text-center transition-all hover:border-indigo-300 hover:shadow-sm relative">
+                <div class="chk-badge absolute top-2 right-2 w-5 h-5 bg-indigo-500 rounded-full flex items-center justify-center">
+                  <i class="fas fa-check text-white" style="font-size:9px"></i>
+                </div>
+                <div class="icon-wrap w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-2 transition-colors">
+                  <i class="fas fa-face-frown text-slate-500 text-xl transition-colors"></i>
+                </div>
+                <div class="font-semibold text-slate-700 text-xs">Non</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /step-3 -->
+
+    <!-- ═══ STEP 4 : Comparaison ═══ -->
+    <div class="step-panel bg-white rounded-2xl shadow-sm overflow-hidden" id="step-4"
+         style="border:1.5px solid #fef3c7; border-top:3px solid #f59e0b;">
+      <div class="px-6 py-4 flex items-center gap-3" style="background:linear-gradient(90deg,#d97706,#ea580c);">
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:rgba(255,255,255,0.18);">
+          <i class="fas fa-balance-scale text-white"></i>
+        </div>
+        <div>
+          <h2 class="text-white font-bold text-base">Comparaison traditionnel / numérique</h2>
+          <p class="text-amber-100 text-xs">Questions 12 – 14</p>
+        </div>
+      </div>
+      <div class="p-6 space-y-7">
+
+        <!-- Q12 -->
+        <div class="question-group" data-name="q12" data-required="true">
+          <div class="flex items-center gap-2.5 mb-3">
+            <span class="q-num">12</span>
+            <p class="font-semibold text-slate-800">Par rapport à l'enseignement traditionnel, le numérique est : <span class="text-red-400">*</span></p>
+          </div>
+          <div class="space-y-2">
+            <label class="radio-list cursor-pointer block"><input type="radio" name="q12" value="Plus efficace" class="sr-only">
+              <div class="list-face border-2 border-slate-200 rounded-xl px-4 py-3.5 flex items-center gap-3 transition-all hover:border-indigo-300 hover:bg-indigo-50/40">
+                <div class="dot-ring w-5 h-5 border-2 border-slate-300 rounded-full flex-shrink-0 flex items-center justify-center transition-colors"><div class="dot-fill w-2.5 h-2.5 rounded-full bg-indigo-500"></div></div>
+                <span class="font-medium text-slate-700 flex-1">Plus efficace</span>
+                <div class="row-icon w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0 transition-colors"><i class="fas fa-rocket text-slate-500 text-sm transition-colors"></i></div>
+              </div></label>
+            <label class="radio-list cursor-pointer block"><input type="radio" name="q12" value="Moins efficace" class="sr-only">
+              <div class="list-face border-2 border-slate-200 rounded-xl px-4 py-3.5 flex items-center gap-3 transition-all hover:border-indigo-300 hover:bg-indigo-50/40">
+                <div class="dot-ring w-5 h-5 border-2 border-slate-300 rounded-full flex-shrink-0 flex items-center justify-center transition-colors"><div class="dot-fill w-2.5 h-2.5 rounded-full bg-indigo-500"></div></div>
+                <span class="font-medium text-slate-700 flex-1">Moins efficace</span>
+                <div class="row-icon w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0 transition-colors"><i class="fas fa-arrow-trend-down text-slate-500 text-sm transition-colors"></i></div>
+              </div></label>
+            <label class="radio-list cursor-pointer block"><input type="radio" name="q12" value="Équivalent" class="sr-only">
+              <div class="list-face border-2 border-slate-200 rounded-xl px-4 py-3.5 flex items-center gap-3 transition-all hover:border-indigo-300 hover:bg-indigo-50/40">
+                <div class="dot-ring w-5 h-5 border-2 border-slate-300 rounded-full flex-shrink-0 flex items-center justify-center transition-colors"><div class="dot-fill w-2.5 h-2.5 rounded-full bg-indigo-500"></div></div>
+                <span class="font-medium text-slate-700 flex-1">Équivalent</span>
+                <div class="row-icon w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0 transition-colors"><i class="fas fa-equals text-slate-500 text-sm transition-colors"></i></div>
+              </div></label>
+          </div>
+        </div>
+
+        <div class="border-t border-slate-100"></div>
+
+        <!-- Q13 -->
+        <div class="question-group" data-name="q13" data-required="false">
+          <div class="flex items-center gap-2.5 mb-1">
+            <span class="q-num">13</span>
+            <p class="font-semibold text-slate-800">Avantages de l'enseignement traditionnel</p>
+          </div>
+          <p class="text-xs text-slate-400 mb-3 ml-9">Plusieurs choix possibles</p>
+          <div class="flex flex-wrap gap-2">
+            <label class="cursor-pointer"><input type="checkbox" name="q13" value="Meilleure concentration" class="sr-only pill-input">
+              <div class="pill-face border-2 border-slate-200 rounded-xl px-3.5 py-2.5 flex items-center gap-2.5 transition-all hover:border-indigo-300 select-none">
+                <span class="pill-icon w-7 h-7 rounded-lg bg-slate-100 flex-shrink-0 flex items-center justify-center transition-colors"><i class="fas fa-crosshairs text-slate-500 text-sm transition-colors"></i></span>
+                <span class="text-sm font-medium text-slate-600">Meilleure concentration</span>
+              </div></label>
+            <label class="cursor-pointer"><input type="checkbox" name="q13" value="Discipline" class="sr-only pill-input">
+              <div class="pill-face border-2 border-slate-200 rounded-xl px-3.5 py-2.5 flex items-center gap-2.5 transition-all hover:border-indigo-300 select-none">
+                <span class="pill-icon w-7 h-7 rounded-lg bg-slate-100 flex-shrink-0 flex items-center justify-center transition-colors"><i class="fas fa-ruler text-slate-500 text-sm transition-colors"></i></span>
+                <span class="text-sm font-medium text-slate-600">Discipline</span>
+              </div></label>
+            <label class="cursor-pointer"><input type="checkbox" name="q13" value="Moins de distraction" class="sr-only pill-input">
+              <div class="pill-face border-2 border-slate-200 rounded-xl px-3.5 py-2.5 flex items-center gap-2.5 transition-all hover:border-indigo-300 select-none">
+                <span class="pill-icon w-7 h-7 rounded-lg bg-slate-100 flex-shrink-0 flex items-center justify-center transition-colors"><i class="fas fa-volume-xmark text-slate-500 text-sm transition-colors"></i></span>
+                <span class="text-sm font-medium text-slate-600">Moins de distraction</span>
+              </div></label>
+          </div>
+        </div>
+
+        <div class="border-t border-slate-100"></div>
+
+        <!-- Q14 -->
+        <div class="question-group" data-name="q14" data-required="true">
+          <div class="flex items-center gap-2.5 mb-3">
+            <span class="q-num">14</span>
+            <p class="font-semibold text-slate-800">Rôle du numérique dans votre enseignement <span class="text-red-400">*</span></p>
+          </div>
+          <div class="space-y-2">
+            <label class="radio-list cursor-pointer block"><input type="radio" name="q14" value="Remplace le traditionnel" class="sr-only">
+              <div class="list-face border-2 border-slate-200 rounded-xl px-4 py-3.5 flex items-center gap-3 transition-all hover:border-indigo-300 hover:bg-indigo-50/40">
+                <div class="dot-ring w-5 h-5 border-2 border-slate-300 rounded-full flex-shrink-0 flex items-center justify-center transition-colors"><div class="dot-fill w-2.5 h-2.5 rounded-full bg-indigo-500"></div></div>
+                <span class="font-medium text-slate-700 flex-1">Remplace le traditionnel</span>
+                <div class="row-icon w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0 transition-colors"><i class="fas fa-arrows-rotate text-slate-500 text-sm transition-colors"></i></div>
+              </div></label>
+            <label class="radio-list cursor-pointer block"><input type="radio" name="q14" value="Complète le traditionnel" class="sr-only">
+              <div class="list-face border-2 border-slate-200 rounded-xl px-4 py-3.5 flex items-center gap-3 transition-all hover:border-indigo-300 hover:bg-indigo-50/40">
+                <div class="dot-ring w-5 h-5 border-2 border-slate-300 rounded-full flex-shrink-0 flex items-center justify-center transition-colors"><div class="dot-fill w-2.5 h-2.5 rounded-full bg-indigo-500"></div></div>
+                <span class="font-medium text-slate-700 flex-1">Complète le traditionnel</span>
+                <div class="row-icon w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0 transition-colors"><i class="fas fa-puzzle-piece text-slate-500 text-sm transition-colors"></i></div>
+              </div></label>
+            <label class="radio-list cursor-pointer block"><input type="radio" name="q14" value="N'a pas d'impact" class="sr-only">
+              <div class="list-face border-2 border-slate-200 rounded-xl px-4 py-3.5 flex items-center gap-3 transition-all hover:border-indigo-300 hover:bg-indigo-50/40">
+                <div class="dot-ring w-5 h-5 border-2 border-slate-300 rounded-full flex-shrink-0 flex items-center justify-center transition-colors"><div class="dot-fill w-2.5 h-2.5 rounded-full bg-indigo-500"></div></div>
+                <span class="font-medium text-slate-700 flex-1">N'a pas d'impact</span>
+                <div class="row-icon w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0 transition-colors"><i class="fas fa-minus text-slate-500 text-sm transition-colors"></i></div>
+              </div></label>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /step-4 -->
+
+    <!-- ═══ STEP 5 : Difficultés & Perspectives ═══ -->
+    <div class="step-panel bg-white rounded-2xl shadow-sm overflow-hidden" id="step-5"
+         style="border:1.5px solid #ffe4e6; border-top:3px solid #f43f5e;">
+      <div class="px-6 py-4 flex items-center gap-3" style="background:linear-gradient(90deg,#e11d48,#be185d);">
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:rgba(255,255,255,0.18);">
+          <i class="fas fa-road text-white"></i>
+        </div>
+        <div>
+          <h2 class="text-white font-bold text-base">Difficultés & Perspectives</h2>
+          <p class="text-rose-100 text-xs">Questions 15 – 18</p>
+        </div>
+      </div>
+      <div class="p-6 space-y-7">
+
+        <!-- Q15 -->
+        <div class="question-group" data-name="q15" data-required="false">
+          <div class="flex items-center gap-2.5 mb-1">
+            <span class="q-num">15</span>
+            <p class="font-semibold text-slate-800">Difficultés rencontrées</p>
+          </div>
+          <p class="text-xs text-slate-400 mb-3 ml-9">Plusieurs choix possibles</p>
+          <div class="flex flex-wrap gap-2">
+            <label class="cursor-pointer"><input type="checkbox" name="q15" value="Manque de matériel" class="sr-only pill-input">
+              <div class="pill-face border-2 border-slate-200 rounded-xl px-3.5 py-2.5 flex items-center gap-2.5 transition-all hover:border-indigo-300 select-none">
+                <span class="pill-icon w-7 h-7 rounded-lg bg-slate-100 flex-shrink-0 flex items-center justify-center transition-colors"><i class="fas fa-desktop text-slate-500 text-sm transition-colors"></i></span>
+                <span class="text-sm font-medium text-slate-600">Manque de matériel</span>
+              </div></label>
+            <label class="cursor-pointer"><input type="checkbox" name="q15" value="Manque de formation" class="sr-only pill-input">
+              <div class="pill-face border-2 border-slate-200 rounded-xl px-3.5 py-2.5 flex items-center gap-2.5 transition-all hover:border-indigo-300 select-none">
+                <span class="pill-icon w-7 h-7 rounded-lg bg-slate-100 flex-shrink-0 flex items-center justify-center transition-colors"><i class="fas fa-book-open text-slate-500 text-sm transition-colors"></i></span>
+                <span class="text-sm font-medium text-slate-600">Manque de formation</span>
+              </div></label>
+            <label class="cursor-pointer"><input type="checkbox" name="q15" value="Problèmes techniques" class="sr-only pill-input">
+              <div class="pill-face border-2 border-slate-200 rounded-xl px-3.5 py-2.5 flex items-center gap-2.5 transition-all hover:border-indigo-300 select-none">
+                <span class="pill-icon w-7 h-7 rounded-lg bg-slate-100 flex-shrink-0 flex items-center justify-center transition-colors"><i class="fas fa-wrench text-slate-500 text-sm transition-colors"></i></span>
+                <span class="text-sm font-medium text-slate-600">Problèmes techniques</span>
+              </div></label>
+            <label class="cursor-pointer"><input type="checkbox" name="q15" value="Manque de temps" class="sr-only pill-input">
+              <div class="pill-face border-2 border-slate-200 rounded-xl px-3.5 py-2.5 flex items-center gap-2.5 transition-all hover:border-indigo-300 select-none">
+                <span class="pill-icon w-7 h-7 rounded-lg bg-slate-100 flex-shrink-0 flex items-center justify-center transition-colors"><i class="fas fa-clock text-slate-500 text-sm transition-colors"></i></span>
+                <span class="text-sm font-medium text-slate-600">Manque de temps</span>
+              </div></label>
+            <label class="cursor-pointer"><input type="checkbox" name="q15" value="Classes surchargées" class="sr-only pill-input">
+              <div class="pill-face border-2 border-slate-200 rounded-xl px-3.5 py-2.5 flex items-center gap-2.5 transition-all hover:border-indigo-300 select-none">
+                <span class="pill-icon w-7 h-7 rounded-lg bg-slate-100 flex-shrink-0 flex items-center justify-center transition-colors"><i class="fas fa-users text-slate-500 text-sm transition-colors"></i></span>
+                <span class="text-sm font-medium text-slate-600">Classes surchargées</span>
+              </div></label>
+          </div>
+        </div>
+
+        <div class="border-t border-slate-100"></div>
+
+        <!-- Q16 -->
+        <div class="question-group" data-name="q16" data-required="true">
+          <div class="flex items-center gap-2.5 mb-3">
+            <span class="q-num">16</span>
+            <p class="font-semibold text-slate-800">Avez-vous besoin de formation en numérique ? <span class="text-red-400">*</span></p>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <label class="radio-card cursor-pointer">
+              <input type="radio" name="q16" value="Oui" class="sr-only">
+              <div class="card-face border-2 border-slate-200 rounded-2xl p-5 text-center transition-all hover:border-indigo-300 hover:shadow-sm relative">
+                <div class="chk-badge absolute top-3 right-3 w-5 h-5 bg-indigo-500 rounded-full flex items-center justify-center"><i class="fas fa-check text-white" style="font-size:9px"></i></div>
+                <div class="icon-wrap w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3 transition-colors">
+                  <i class="fas fa-graduation-cap text-slate-500 text-2xl transition-colors"></i>
+                </div>
+                <div class="font-semibold text-slate-700 text-sm">Oui</div>
+              </div>
+            </label>
+            <label class="radio-card cursor-pointer">
+              <input type="radio" name="q16" value="Non" class="sr-only">
+              <div class="card-face border-2 border-slate-200 rounded-2xl p-5 text-center transition-all hover:border-indigo-300 hover:shadow-sm relative">
+                <div class="chk-badge absolute top-3 right-3 w-5 h-5 bg-indigo-500 rounded-full flex items-center justify-center"><i class="fas fa-check text-white" style="font-size:9px"></i></div>
+                <div class="icon-wrap w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3 transition-colors">
+                  <i class="fas fa-circle-xmark text-slate-500 text-2xl transition-colors"></i>
+                </div>
+                <div class="font-semibold text-slate-700 text-sm">Non</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="border-t border-slate-100"></div>
+
+        <!-- Q17 -->
+        <div class="question-group" data-name="q17" data-required="false">
+          <div class="flex items-center gap-2.5 mb-1">
+            <span class="q-num">17</span>
+            <p class="font-semibold text-slate-800">Type de formation souhaité</p>
+          </div>
+          <p class="text-xs text-slate-400 mb-3 ml-9">Plusieurs choix possibles</p>
+          <div class="flex flex-wrap gap-2">
+            <label class="cursor-pointer"><input type="checkbox" name="q17" value="Utilisation des outils numériques" class="sr-only pill-input">
+              <div class="pill-face border-2 border-slate-200 rounded-xl px-3.5 py-2.5 flex items-center gap-2.5 transition-all hover:border-indigo-300 select-none">
+                <span class="pill-icon w-7 h-7 rounded-lg bg-slate-100 flex-shrink-0 flex items-center justify-center transition-colors"><i class="fas fa-screwdriver-wrench text-slate-500 text-sm transition-colors"></i></span>
+                <span class="text-sm font-medium text-slate-600">Utilisation des outils</span>
+              </div></label>
+            <label class="cursor-pointer"><input type="checkbox" name="q17" value="Création de contenus numériques" class="sr-only pill-input">
+              <div class="pill-face border-2 border-slate-200 rounded-xl px-3.5 py-2.5 flex items-center gap-2.5 transition-all hover:border-indigo-300 select-none">
+                <span class="pill-icon w-7 h-7 rounded-lg bg-slate-100 flex-shrink-0 flex items-center justify-center transition-colors"><i class="fas fa-pencil text-slate-500 text-sm transition-colors"></i></span>
+                <span class="text-sm font-medium text-slate-600">Création de contenus</span>
+              </div></label>
+            <label class="cursor-pointer"><input type="checkbox" name="q17" value="Gestion de classe avec numérique" class="sr-only pill-input">
+              <div class="pill-face border-2 border-slate-200 rounded-xl px-3.5 py-2.5 flex items-center gap-2.5 transition-all hover:border-indigo-300 select-none">
+                <span class="pill-icon w-7 h-7 rounded-lg bg-slate-100 flex-shrink-0 flex items-center justify-center transition-colors"><i class="fas fa-chalkboard-user text-slate-500 text-sm transition-colors"></i></span>
+                <span class="text-sm font-medium text-slate-600">Gestion de classe</span>
+              </div></label>
+            <label class="cursor-pointer"><input type="checkbox" name="q17" value="Évaluation numérique" class="sr-only pill-input">
+              <div class="pill-face border-2 border-slate-200 rounded-xl px-3.5 py-2.5 flex items-center gap-2.5 transition-all hover:border-indigo-300 select-none">
+                <span class="pill-icon w-7 h-7 rounded-lg bg-slate-100 flex-shrink-0 flex items-center justify-center transition-colors"><i class="fas fa-chart-pie text-slate-500 text-sm transition-colors"></i></span>
+                <span class="text-sm font-medium text-slate-600">Évaluation numérique</span>
+              </div></label>
+          </div>
+        </div>
+
+        <div class="border-t border-slate-100"></div>
+
+        <!-- Q18 -->
+        <div class="question-group" data-name="q18" data-required="false">
+          <div class="flex items-center gap-2.5 mb-1">
+            <span class="q-num">18</span>
+            <p class="font-semibold text-slate-800">Améliorations nécessaires</p>
+          </div>
+          <p class="text-xs text-slate-400 mb-3 ml-9">Plusieurs choix possibles</p>
+          <div class="flex flex-wrap gap-2">
+            <label class="cursor-pointer"><input type="checkbox" name="q18" value="Plus d'équipements" class="sr-only pill-input">
+              <div class="pill-face border-2 border-slate-200 rounded-xl px-3.5 py-2.5 flex items-center gap-2.5 transition-all hover:border-indigo-300 select-none">
+                <span class="pill-icon w-7 h-7 rounded-lg bg-slate-100 flex-shrink-0 flex items-center justify-center transition-colors"><i class="fas fa-desktop text-slate-500 text-sm transition-colors"></i></span>
+                <span class="text-sm font-medium text-slate-600">Plus d'équipements</span>
+              </div></label>
+            <label class="cursor-pointer"><input type="checkbox" name="q18" value="Formation des enseignants" class="sr-only pill-input">
+              <div class="pill-face border-2 border-slate-200 rounded-xl px-3.5 py-2.5 flex items-center gap-2.5 transition-all hover:border-indigo-300 select-none">
+                <span class="pill-icon w-7 h-7 rounded-lg bg-slate-100 flex-shrink-0 flex items-center justify-center transition-colors"><i class="fas fa-person-chalkboard text-slate-500 text-sm transition-colors"></i></span>
+                <span class="text-sm font-medium text-slate-600">Formation des enseignants</span>
+              </div></label>
+            <label class="cursor-pointer"><input type="checkbox" name="q18" value="Réduction du nombre d'élèves" class="sr-only pill-input">
+              <div class="pill-face border-2 border-slate-200 rounded-xl px-3.5 py-2.5 flex items-center gap-2.5 transition-all hover:border-indigo-300 select-none">
+                <span class="pill-icon w-7 h-7 rounded-lg bg-slate-100 flex-shrink-0 flex items-center justify-center transition-colors"><i class="fas fa-user-minus text-slate-500 text-sm transition-colors"></i></span>
+                <span class="text-sm font-medium text-slate-600">Réduction des effectifs</span>
+              </div></label>
+            <label class="cursor-pointer"><input type="checkbox" name="q18" value="Meilleure connexion internet" class="sr-only pill-input">
+              <div class="pill-face border-2 border-slate-200 rounded-xl px-3.5 py-2.5 flex items-center gap-2.5 transition-all hover:border-indigo-300 select-none">
+                <span class="pill-icon w-7 h-7 rounded-lg bg-slate-100 flex-shrink-0 flex items-center justify-center transition-colors"><i class="fas fa-wifi text-slate-500 text-sm transition-colors"></i></span>
+                <span class="text-sm font-medium text-slate-600">Meilleure connexion</span>
+              </div></label>
+            <label class="cursor-pointer"><input type="checkbox" name="q18" value="Support technique" class="sr-only pill-input">
+              <div class="pill-face border-2 border-slate-200 rounded-xl px-3.5 py-2.5 flex items-center gap-2.5 transition-all hover:border-indigo-300 select-none">
+                <span class="pill-icon w-7 h-7 rounded-lg bg-slate-100 flex-shrink-0 flex items-center justify-center transition-colors"><i class="fas fa-headset text-slate-500 text-sm transition-colors"></i></span>
+                <span class="text-sm font-medium text-slate-600">Support technique</span>
+              </div></label>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /step-5 -->
+
+    <!-- ═══ STEP 6 : Avis global ═══ -->
+    <div class="step-panel bg-white rounded-2xl shadow-sm overflow-hidden" id="step-6"
+         style="border:1.5px solid #dcfce7; border-top:3px solid #22c55e;">
+      <div class="px-6 py-4 flex items-center gap-3" style="background:linear-gradient(90deg,#16a34a,#059669);">
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:rgba(255,255,255,0.18);">
+          <i class="fas fa-star text-white"></i>
+        </div>
+        <div>
+          <h2 class="text-white font-bold text-base">Avis global</h2>
+          <p class="text-emerald-100 text-xs">Questions 19 – 20 · Dernière section</p>
+        </div>
+      </div>
+      <div class="p-6 space-y-7">
+
+        <!-- Q19 -->
+        <div class="question-group" data-name="q19" data-required="true">
+          <div class="flex items-center gap-2.5 mb-3">
+            <span class="q-num">19</span>
+            <p class="font-semibold text-slate-800">L'intégration du numérique dans l'enseignement est : <span class="text-red-400">*</span></p>
+          </div>
+          <div class="flex gap-1.5 flex-wrap sm:flex-nowrap">
+            <label class="scale-card cursor-pointer flex-1 min-w-[80px]"><input type="radio" name="q19" value="Très importante" class="sr-only">
+              <div class="scale-face border-2 border-slate-200 rounded-xl py-3.5 px-1 text-center transition-all hover:border-indigo-300"><div class="scale-pip w-1.5 h-1.5 rounded-full bg-slate-300 mx-auto mb-2"></div><div class="text-xs font-semibold text-slate-600 leading-tight">Très importante</div></div></label>
+            <label class="scale-card cursor-pointer flex-1 min-w-[80px]"><input type="radio" name="q19" value="Importante" class="sr-only">
+              <div class="scale-face border-2 border-slate-200 rounded-xl py-3.5 px-1 text-center transition-all hover:border-indigo-300"><div class="scale-pip w-1.5 h-1.5 rounded-full bg-slate-300 mx-auto mb-2"></div><div class="text-xs font-semibold text-slate-600 leading-tight">Importante</div></div></label>
+            <label class="scale-card cursor-pointer flex-1 min-w-[80px]"><input type="radio" name="q19" value="Moyennement importante" class="sr-only">
+              <div class="scale-face border-2 border-slate-200 rounded-xl py-3.5 px-1 text-center transition-all hover:border-indigo-300"><div class="scale-pip w-1.5 h-1.5 rounded-full bg-slate-300 mx-auto mb-2"></div><div class="text-xs font-semibold text-slate-600 leading-tight">Moyenne</div></div></label>
+            <label class="scale-card cursor-pointer flex-1 min-w-[80px]"><input type="radio" name="q19" value="Peu importante" class="sr-only">
+              <div class="scale-face border-2 border-slate-200 rounded-xl py-3.5 px-1 text-center transition-all hover:border-indigo-300"><div class="scale-pip w-1.5 h-1.5 rounded-full bg-slate-300 mx-auto mb-2"></div><div class="text-xs font-semibold text-slate-600 leading-tight">Peu importante</div></div></label>
+            <label class="scale-card cursor-pointer flex-1 min-w-[80px]"><input type="radio" name="q19" value="Pas importante" class="sr-only">
+              <div class="scale-face border-2 border-slate-200 rounded-xl py-3.5 px-1 text-center transition-all hover:border-indigo-300"><div class="scale-pip w-1.5 h-1.5 rounded-full bg-slate-300 mx-auto mb-2"></div><div class="text-xs font-semibold text-slate-600 leading-tight">Pas importante</div></div></label>
+          </div>
+        </div>
+
+        <div class="border-t border-slate-100"></div>
+
+        <!-- Q20 -->
+        <div class="question-group" data-name="q20" data-required="true">
+          <div class="flex items-center gap-2.5 mb-3">
+            <span class="q-num">20</span>
+            <p class="font-semibold text-slate-800">Recommanderiez-vous l'usage du numérique à vos collègues ? <span class="text-red-400">*</span></p>
+          </div>
+          <div class="flex gap-1.5 flex-wrap sm:flex-nowrap">
+            <label class="scale-card cursor-pointer flex-1 min-w-[80px]"><input type="radio" name="q20" value="Oui fortement" class="sr-only">
+              <div class="scale-face border-2 border-slate-200 rounded-xl py-3.5 px-1 text-center transition-all hover:border-indigo-300"><div class="scale-pip w-1.5 h-1.5 rounded-full bg-slate-300 mx-auto mb-2"></div><div class="text-xs font-semibold text-slate-600 leading-tight">Oui fortement</div></div></label>
+            <label class="scale-card cursor-pointer flex-1 min-w-[80px]"><input type="radio" name="q20" value="Oui" class="sr-only">
+              <div class="scale-face border-2 border-slate-200 rounded-xl py-3.5 px-1 text-center transition-all hover:border-indigo-300"><div class="scale-pip w-1.5 h-1.5 rounded-full bg-slate-300 mx-auto mb-2"></div><div class="text-xs font-semibold text-slate-600 leading-tight">Oui</div></div></label>
+            <label class="scale-card cursor-pointer flex-1 min-w-[80px]"><input type="radio" name="q20" value="Neutre" class="sr-only">
+              <div class="scale-face border-2 border-slate-200 rounded-xl py-3.5 px-1 text-center transition-all hover:border-indigo-300"><div class="scale-pip w-1.5 h-1.5 rounded-full bg-slate-300 mx-auto mb-2"></div><div class="text-xs font-semibold text-slate-600 leading-tight">Neutre</div></div></label>
+            <label class="scale-card cursor-pointer flex-1 min-w-[80px]"><input type="radio" name="q20" value="Non" class="sr-only">
+              <div class="scale-face border-2 border-slate-200 rounded-xl py-3.5 px-1 text-center transition-all hover:border-indigo-300"><div class="scale-pip w-1.5 h-1.5 rounded-full bg-slate-300 mx-auto mb-2"></div><div class="text-xs font-semibold text-slate-600 leading-tight">Non</div></div></label>
+            <label class="scale-card cursor-pointer flex-1 min-w-[80px]"><input type="radio" name="q20" value="Pas du tout" class="sr-only">
+              <div class="scale-face border-2 border-slate-200 rounded-xl py-3.5 px-1 text-center transition-all hover:border-indigo-300"><div class="scale-pip w-1.5 h-1.5 rounded-full bg-slate-300 mx-auto mb-2"></div><div class="text-xs font-semibold text-slate-600 leading-tight">Pas du tout</div></div></label>
+          </div>
+        </div>
+
+        <!-- Confidentiality note -->
+        <div class="rounded-xl px-4 py-3.5 flex items-start gap-3 text-sm"
+             style="background:#f0fdf4;border:1.5px solid #bbf7d0;color:#166534;">
+          <i class="fas fa-shield-halved mt-0.5 flex-shrink-0 text-emerald-600"></i>
+          <span>Vos réponses sont <strong>anonymes</strong> et utilisées uniquement à des fins de recherche scientifique.</span>
+        </div>
+
+      </div>
+    </div><!-- /step-6 -->
+
+    </form>
+
+    <!-- ── Navigation bar ── -->
+    <div class="flex items-center gap-3 mt-4 pb-4">
+      <button id="btn-prev" onclick="prevStep()" type="button"
+        class="nav-btn hidden items-center gap-2 px-5 py-3.5 rounded-xl font-semibold text-slate-600 border-2 border-slate-200 bg-white shadow-sm hover:border-indigo-300 hover:text-indigo-600 hover:shadow-md transition-all">
+        <i class="fas fa-chevron-left text-xs"></i> Précédent
+      </button>
+      <div class="flex-1 text-center">
+        <span id="nav-hint" class="text-xs text-slate-400 font-medium select-none"></span>
+      </div>
+      <button id="btn-next" onclick="nextStep()" type="button"
+        class="nav-btn flex items-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-white shadow-lg transition-all"
+        style="background:linear-gradient(135deg,#4f46e5,#7c3aed);box-shadow:0 4px 14px rgba(79,70,229,0.35);">
+        Suivant <i class="fas fa-chevron-right text-xs"></i>
+      </button>
+      <button id="btn-submit" onclick="submitForm()" type="button"
+        class="nav-btn hidden items-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-white shadow-lg transition-all"
+        style="background:linear-gradient(135deg,#16a34a,#059669);box-shadow:0 4px 14px rgba(22,163,74,0.35);">
+        <i class="fas fa-paper-plane text-xs"></i> Soumettre
+      </button>
+    </div>
+  </main>
+
+  <!-- ═══ SUCCESS OVERLAY ═══ -->
+  <div id="success-overlay" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4"
+       style="background:rgba(248,250,252,0.97);backdrop-filter:blur(10px);">
+    <div class="text-center max-w-sm w-full">
+      <!-- Animated check circle -->
+      <div class="relative w-28 h-28 mx-auto mb-6">
+        <div class="absolute inset-0 rounded-full animate-ping opacity-20"
+             style="background:#16a34a;animation-duration:1.5s;"></div>
+        <div class="relative w-28 h-28 rounded-full flex items-center justify-center"
+             style="background:linear-gradient(135deg,#16a34a,#059669);box-shadow:0 10px 40px rgba(22,163,74,0.4);">
+          <i class="fas fa-check text-white" style="font-size:2.5rem;"></i>
+        </div>
+      </div>
+      <h2 class="text-2xl font-extrabold text-slate-800 mb-2">Merci pour votre participation !</h2>
+      <p class="text-slate-500 text-sm mb-2 leading-relaxed">
+        Votre réponse a bien été enregistrée. Vos données contribuent à améliorer l'enseignement de la Physique-Chimie au Maroc.
+      </p>
+      <div class="flex items-center justify-center gap-2 text-xs text-emerald-700 font-semibold mb-7 bg-emerald-50 rounded-xl py-2.5 px-4" style="border:1px solid #bbf7d0;">
+        <i class="fas fa-shield-halved"></i> Réponse soumise anonymement · CRMEF 2024–2025
+      </div>
+      <a href="/" class="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl font-semibold text-white transition shadow-lg"
+         style="background:linear-gradient(135deg,#4f46e5,#7c3aed);box-shadow:0 4px 14px rgba(79,70,229,0.4);">
+        <i class="fas fa-rotate-left text-sm"></i> Répondre à nouveau
+      </a>
+    </div>
+  </div>
+
+  <!-- ═══ JAVASCRIPT ═══ -->
+  <script>
+    const STEPS = 6;
+    const SECTION_NAMES = [
+      'Informations générales','Utilisation des technologies',
+      "Impact sur l'apprentissage",'Comparaison traditionnel / numérique',
+      'Difficultés & Perspectives','Avis global'
+    ];
+    const STEP_ICONS = [
+      'fas fa-user','fas fa-laptop','fas fa-brain',
+      'fas fa-balance-scale','fas fa-road','fas fa-star'
+    ];
+    const REQUIRED_BY_STEP = {
+      1:['q1','q2','q3','q4'], 2:['q6'],
+      3:['q8','q9','q10','q11'], 4:['q12','q14'],
+      5:['q16'], 6:['q19','q20']
+    };
+    let current = 1;
+
+    // ── Step tracker update ────────────────────────────────
+    function updateTracker(n) {
+      const nodes = document.querySelectorAll('.step-node');
+      const lines = document.querySelectorAll('.s-line');
+      nodes.forEach((node, i) => {
+        const step = i + 1;
+        const circle = node.querySelector('.s-circle');
+        const icon   = node.querySelector('.s-icon');
+        const label  = node.querySelector('.s-label');
+        node.classList.remove('s-done','s-active');
+        if (step < n) {
+          node.classList.add('s-done');
+          if (icon) { icon.className = 'fas fa-check s-icon'; icon.style.fontSize = '13px'; }
+        } else if (step === n) {
+          node.classList.add('s-active');
+          if (icon) { icon.className = STEP_ICONS[i] + ' s-icon'; icon.style.fontSize = ''; }
+        } else {
+          if (icon) { icon.className = STEP_ICONS[i] + ' s-icon'; icon.style.fontSize = ''; }
+        }
+      });
+      lines.forEach((line, i) => {
+        line.classList.toggle('done', i + 1 < n);
+      });
+    }
+
+    // ── Step show/hide ─────────────────────────────────────
+    function showStep(n) {
+      document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById(`step-${n}`).classList.add('active');
+      current = n;
+      const pct = (n / STEPS) * 100;
+      document.getElementById('progress-bar').style.width = pct + '%';
+      document.getElementById('lbl-step').textContent    = `Étape ${n} / ${STEPS}`;
+      document.getElementById('lbl-section').textContent = SECTION_NAMES[n - 1];
+      updateTracker(n);
+
+      // Hide hero card after step 1 starts moving
+      const hero = document.getElementById('hero-card');
+      if (hero) { hero.style.display = n > 1 ? 'none' : ''; }
+
+      // Show header progress badge after step 1
+      const hdrProgress = document.getElementById('hdr-progress');
+      const hdrStep = document.getElementById('hdr-step');
+      if (hdrProgress && hdrStep) {
+        hdrProgress.classList.toggle('hidden', n === 1);
+        hdrStep.textContent = n;
+      }
+
+      const prev   = document.getElementById('btn-prev');
+      const next   = document.getElementById('btn-next');
+      const submit = document.getElementById('btn-submit');
+      prev.classList.toggle('hidden', n === 1);
+      prev.classList.toggle('flex', n > 1);
+      next.classList.toggle('hidden', n === STEPS);
+      submit.classList.toggle('hidden', n !== STEPS);
+      submit.classList.toggle('flex', n === STEPS);
+      document.getElementById('error-banner').classList.add('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ── Validation ─────────────────────────────────────────
+    function validateStep(n) {
+      return (REQUIRED_BY_STEP[n] || []).filter(name =>
+        !document.querySelector(`input[name="${name}"]:checked`)
+      );
+    }
+
+    function highlightErrors(names) {
+      names.forEach(name => {
+        const g = document.querySelector(`.question-group[data-name="${name}"]`);
+        if (!g) return;
+        if (!g.querySelector('input:checked')) {
+          g.classList.add('q-error');
+          g.querySelectorAll('.card-face,.list-face,.scale-face').forEach(f =>
+            f.style.setProperty('border-color','#fca5a5','important'));
+        }
+      });
+    }
+
+    function clearErrors() {
+      document.querySelectorAll('.question-group').forEach(g => {
+        g.classList.remove('q-error');
+        g.querySelectorAll('.card-face,.list-face,.scale-face').forEach(f =>
+          f.style.removeProperty('border-color'));
+      });
+    }
+
+    // ── Nav ────────────────────────────────────────────────
+    function nextStep() {
+      clearErrors();
+      const missing = validateStep(current);
+      if (missing.length) {
+        highlightErrors(missing);
+        document.getElementById('error-banner').classList.remove('hidden');
+        document.getElementById('error-banner').scrollIntoView({ behavior:'smooth', block:'center' });
+        return;
+      }
+      if (current < STEPS) showStep(current + 1);
+    }
+
+    function prevStep() {
+      if (current > 1) { clearErrors(); showStep(current - 1); }
+    }
+
+    // ── Submit ─────────────────────────────────────────────
+    async function submitForm() {
+      clearErrors();
+      const missing = validateStep(current);
+      if (missing.length) { highlightErrors(missing); document.getElementById('error-banner').classList.remove('hidden'); return; }
+
+      const btn = document.getElementById('btn-submit');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin text-xs"></i> Envoi…';
+
+      const fd = new FormData(document.getElementById('survey-form'));
+      const data = {};
+      for (const [k, v] of fd.entries()) {
+        if (data[k] !== undefined) {
+          data[k] = Array.isArray(data[k]) ? [...data[k], v] : [data[k], v];
+        } else { data[k] = v; }
+      }
+
+      try {
+        const res  = await fetch('/api/submit', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+        const json = await res.json();
+        if (json.success) {
+          document.getElementById('success-overlay').classList.remove('hidden');
+        } else { throw new Error(json.error || 'Erreur serveur'); }
+      } catch (err) {
+        alert('Erreur : ' + err.message);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane text-xs"></i> Soumettre';
+      }
+    }
+
+    // Init tracker
+    updateTracker(1);
+  </script>
+</body>
+</html>
